@@ -9,12 +9,17 @@ app = Flask(__name__, static_folder='./', static_url_path='', template_folder='.
 CORS(app)
 
 # Configuração do banco de dados
-if os.environ.get('DATABASE_URL'):
-    # Para deploy (Render/Railway)
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    # Para deploy (Railway/Render) - ajustar PostgreSQL URL se necessário
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print(f"📊 Usando banco de dados: PostgreSQL")
 else:
     # Para desenvolvimento local
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/dados.db'
+    print(f"📊 Usando banco de dados: SQLite local")
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'supersegredo')
@@ -297,15 +302,40 @@ def debug_database():
 def health_check():
     return jsonify({"status": "OK", "message": "Sistema TMA/TMR funcionando"})
 
+# Rota de debug para Railway
+@app.route("/debug")
+def debug_info():
+    import sys
+    return jsonify({
+        "status": "OK",
+        "python_version": sys.version,
+        "port": os.environ.get('PORT', 'não definida'),
+        "database_url": "configurada" if os.environ.get('DATABASE_URL') else "não configurada",
+        "flask_env": os.environ.get('FLASK_ENV', 'não definido'),
+        "working_directory": os.getcwd(),
+        "files": os.listdir('.')[:10]  # Primeiros 10 arquivos
+    })
+
 if __name__ == "__main__":
-    # Criar diretório instance se não existir (para SQLite local)
-    os.makedirs('instance', exist_ok=True)
-    
-    # Criar tabelas automaticamente se não existirem
-    with app.app_context():
-        db.create_all()
-    
-    # Usar porta do ambiente (para deploy) ou 5000 (local)
-    port = int(os.environ.get('PORT', 5000))
-    debug_mode = os.environ.get('FLASK_ENV') == 'development'
-    app.run(host='0.0.0.0', port=port, debug=debug_mode)
+    try:
+        # Criar diretório instance se não existir (para SQLite local)
+        os.makedirs('instance', exist_ok=True)
+        
+        # Criar tabelas automaticamente se não existirem
+        with app.app_context():
+            db.create_all()
+            print("✅ Banco de dados inicializado com sucesso")
+        
+        # Usar porta do ambiente (para deploy) ou 5000 (local)
+        port = int(os.environ.get('PORT', 5000))
+        debug_mode = os.environ.get('FLASK_ENV') == 'development'
+        
+        print(f"🚀 Iniciando servidor na porta {port}")
+        app.run(host='0.0.0.0', port=port, debug=debug_mode)
+        
+    except Exception as e:
+        print(f"❌ Erro ao iniciar aplicação: {str(e)}")
+        # Tentar iniciar mesmo com erro no banco
+        port = int(os.environ.get('PORT', 5000))
+        print(f"🔄 Tentando iniciar servidor na porta {port} sem banco")
+        app.run(host='0.0.0.0', port=port, debug=False)
