@@ -1,0 +1,14 @@
+# Configuração específica para Render.com
+# Este arquivo garante que o deploy funcione corretamente
+
+# Build Commands
+build: pip install -r requirements.txt
+
+# Start Command
+start: gunicorn app:app --bind 0.0.0.0:$PORT
+
+# Health Check
+health_check_path: /health
+
+# Environment
+environment: production

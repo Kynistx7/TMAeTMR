@@ -26,7 +26,7 @@ Sistema web para cálculo de Tempo Médio de Atendimento (TMA) e Tempo Médio po
    - Selecione seu repositório
    - Configure:
      - **Build Command**: `pip install -r requirements.txt`
-     - **Start Command**: `python app.py`
+     - **Start Command**: `gunicorn app:app --host 0.0.0.0 --port $PORT`
      - **Environment**: Python 3
 
 4. **Aguarde o deploy** (2-5 minutos)
