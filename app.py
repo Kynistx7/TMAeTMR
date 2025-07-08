@@ -317,25 +317,47 @@ def debug_info():
     })
 
 if __name__ == "__main__":
+    print("🚀 Iniciando Sistema TMA/TMR...")
+    
     try:
+        # Configurar porta
+        port = int(os.environ.get('PORT', 5000))
+        print(f"📡 Porta configurada: {port}")
+        
         # Criar diretório instance se não existir (para SQLite local)
-        os.makedirs('instance', exist_ok=True)
+        if not os.environ.get('DATABASE_URL'):
+            os.makedirs('instance', exist_ok=True)
+            print("📁 Diretório instance criado para SQLite")
         
         # Criar tabelas automaticamente se não existirem
         with app.app_context():
-            db.create_all()
-            print("✅ Banco de dados inicializado com sucesso")
+            try:
+                db.create_all()
+                print("✅ Banco de dados inicializado com sucesso")
+            except Exception as db_error:
+                print(f"⚠️ Aviso no banco de dados: {str(db_error)}")
         
-        # Usar porta do ambiente (para deploy) ou 5000 (local)
-        port = int(os.environ.get('PORT', 5000))
-        debug_mode = os.environ.get('FLASK_ENV') == 'development'
+        print(f"🌐 Servidor iniciando em 0.0.0.0:{port}")
+        print("🔗 Acesse /health para verificar status")
         
-        print(f"🚀 Iniciando servidor na porta {port}")
-        app.run(host='0.0.0.0', port=port, debug=debug_mode)
+        # Iniciar servidor
+        app.run(
+            host='0.0.0.0', 
+            port=port, 
+            debug=False,
+            threaded=True
+        )
         
     except Exception as e:
-        print(f"❌ Erro ao iniciar aplicação: {str(e)}")
-        # Tentar iniciar mesmo com erro no banco
-        port = int(os.environ.get('PORT', 5000))
-        print(f"🔄 Tentando iniciar servidor na porta {port} sem banco")
-        app.run(host='0.0.0.0', port=port, debug=False)
+        print(f"❌ Erro crítico ao iniciar aplicação: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        # Última tentativa - servidor básico
+        try:
+            port = int(os.environ.get('PORT', 5000))
+            print(f"🔄 Tentativa de emergência na porta {port}")
+            app.run(host='0.0.0.0', port=port, debug=False)
+        except:
+            print("💥 Falha total ao iniciar servidor")
+            raise
