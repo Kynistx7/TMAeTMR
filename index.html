@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cálculo de TMA e TMR</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,700">
+  <style>
+    body { font-family: Roboto, Arial, sans-serif; padding: 20px; background: #f8f9fa; }
+    h2 { margin-top: 0; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .topbar button { padding: 6px 12px; }
+    .user { font-weight: 700; }
+    form input, form button { padding: 6px; margin: 5px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; background: #fff; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    .meta-ok { background-color: #c8e6c9; }
+    .meta-fail { background-color: #ffcdd2; }
+    #limpar-registros { background: #f44336; color: #fff; border: none; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <span>Usuário: <span id="usuario-logado"></span></span>
+    <button id="logout-btn">Sair</button>
+  </div>
+  <button id="limpar-registros" type="button">Limpar registros</button>
+  <h2>Registro de Operadores</h2>
+  <form id="form">
+    <input type="text" id="nome" placeholder="Nome do Operador" required>
+    <input type="time" step="1" id="tv" placeholder="Tempo de Venda (TV) - hh:mm" required>
+    <input type="time" step="1" id="tr" placeholder="Tempo de Recebimento (TR) - hh:mm" required>
+    <input type="number" id="cupons" placeholder="Qtd. de Cupons" required>
+    <input type="number" id="itens" placeholder="Qtd. de Itens" required>
+    <button type="submit">Registrar</button>
+  </form>
+  <h3>Resultados:</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th><th>TMA</th><th>TMR</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="tabela"></tbody>
+  </table>
+  <script src="js/script.js"></script>
+</body>
+</html>

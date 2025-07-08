@@ -1,0 +1,293 @@
+body {
+      background: linear-gradient(135deg, #e3f2fd 0%, #fff9c4 100%);
+      min-height: 100vh;
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
+      color: white;
+      padding: 2rem;
+    }
+    
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    
+    .logo-img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      background: white;
+      padding: 10px;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .header-text h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    .header-text p {
+      margin: 0.5rem 0 0 0;
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+    
+    .toolbar {
+      background: #f8f9fa;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .toolbar button {
+      padding: 0.7rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+    }
+    
+    .btn-primary {
+      background: #2196f3;
+      color: white;
+    }
+    
+    .btn-success {
+      background: #4caf50;
+      color: white;
+    }
+    
+    .btn-warning {
+      background: #ff9800;
+      color: white;
+    }
+    
+    .toolbar button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .content {
+      padding: 2rem;
+    }
+    
+    .info-box {
+      background: linear-gradient(135deg, #e3f2fd 0%, #fff9c4 100%);
+      padding: 1.5rem;
+      margin: 1rem 0;
+      border-radius: 12px;
+      border-left: 4px solid #1976d2;
+    }
+    
+    .info-box h4 {
+      margin: 0 0 1rem 0;
+      color: #0d47a1;
+      font-size: 1.2rem;
+    }
+    
+    .info-box p {
+      margin: 0.5rem 0;
+      color: #1565c0;
+      font-size: 0.95rem;
+    }
+    
+    .form-container {
+      background: #f8f9fa;
+      padding: 2rem;
+      margin: 2rem 0;
+      border-radius: 12px;
+      border: 1px solid #e0e0e0;
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .form-group label {
+      margin-bottom: 0.5rem;
+      color: #0d47a1;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    
+    .form-group input {
+      padding: 0.8rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #1976d2;
+      box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+    }
+    
+    .btn-submit {
+      grid-column: 1 / -1;
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, #ffeb3b 0%, #ffc107 100%);
+      color: #0d47a1;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(255, 193, 7, 0.3);
+    }
+    
+    .results-section {
+      margin-top: 2rem;
+    }
+    
+    .results-header {
+      color: #0d47a1;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .results-table th {
+      background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    
+    .results-table td {
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 1px solid #e0e0e0;
+      vertical-align: middle;
+    }
+    
+    .results-table tr:hover {
+      background: #f5f5f5;
+    }
+    
+    .meta-ok {
+      background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    }
+    
+    .meta-fail {
+      background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    }
+    
+    .status-badge {
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    
+    .badge-success {
+      background: #c8e6c9;
+      color: #2e7d32;
+    }
+    
+    .badge-warning {
+      background: #fff3e0;
+      color: #ef6c00;
+    }
+    
+    .badge-error {
+      background: #ffcdd2;
+      color: #c62828;
+    }
+    
+    /* Responsividade */
+    @media (max-width: 768px) {
+      .container {
+        margin: 1rem;
+        border-radius: 12px;
+      }
+      
+      .header {
+        padding: 1.5rem;
+      }
+      
+      .header-logo {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+      }
+      
+      .logo-img {
+        width: 60px;
+        height: 60px;
+      }
+      
+      .header-text h1 {
+        font-size: 2rem;
+      }
+      
+      .toolbar {
+        padding: 1rem;
+        justify-content: center;
+      }
+      
+      .content {
+        padding: 1rem;
+      }
+      
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .results-table {
+        font-size: 0.8rem;
+      }
+      
+      .results-table th,
+      .results-table td {
+        padding: 0.7rem 0.5rem;
+      }
+    }
