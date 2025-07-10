@@ -519,12 +519,10 @@ def debug_database():
         html += "</ul>"
         
         html += f"<h2>📊 Registros ({len(registros)} total):</h2><table border='1' style='border-collapse: collapse;'>"
-        html += "<tr><th>ID</th><th>Operador</th><th>TMA</th><th>TMR</th><th>Data</th><th>PDV</th><th>User ID</th></tr>"
+        html += "<tr><th>ID</th><th>Operador</th><th>TMA</th><th>TMR</th><th>User ID</th></tr>"
         
         for reg in registros:
-            data_formatada = reg.data_registro.strftime('%d/%m/%Y') if hasattr(reg, 'data_registro') and reg.data_registro else 'N/A'
-            numero_pdv = getattr(reg, 'numero_pdv', 'N/A')
-            html += f"<tr><td>{reg.id}</td><td>{reg.nome_operador}</td><td>{reg.tma}</td><td>{reg.tmr}</td><td>{data_formatada}</td><td>{numero_pdv}</td><td>{reg.user_id}</td></tr>"
+            html += f"<tr><td>{reg.id}</td><td>{reg.nome_operador}</td><td>{reg.tma}</td><td>{reg.tmr}</td><td>{reg.user_id}</td></tr>"
         
         html += '</table>'
         html += "<br><a href='/teste'>← Voltar para teste</a>"

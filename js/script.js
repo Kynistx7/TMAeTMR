@@ -63,7 +63,7 @@ async function carregarRegistros() {
     tabela.innerHTML = "";
     
     if (registros.length === 0) {
-      tabela.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666;">Nenhum registro encontrado</td></tr>';
+      tabela.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">Nenhum registro encontrado</td></tr>';
       return;
     }
     
@@ -71,9 +71,16 @@ async function carregarRegistros() {
       const tmaStatus = op.tma <= META_TMA ? "✅ Dentro da meta" : "⚠️ Fora da meta";
       const tmrStatus = op.tmr <= META_TMR ? "✅ Dentro da meta" : "⚠️ Fora da meta";
       
+      // Formatear data para exibição (DD/MM/YYYY)
+      const dataFormatada = op.data_registro ? 
+        new Date(op.data_registro + 'T00:00:00').toLocaleDateString('pt-BR') : 
+        'N/A';
+      
       const linha = document.createElement('tr');
       linha.innerHTML = `
         <td>${op.nome_operador}</td>
+        <td>${dataFormatada}</td>
+        <td>${op.numero_pdv || 'N/A'}</td>
         <td>
           <strong>${op.tma} min/cupom</strong><br>
           <small style="color: ${op.tma <= META_TMA ? 'green' : 'red'}">${tmaStatus}</small>
@@ -97,7 +104,7 @@ async function carregarRegistros() {
     });
   } catch (error) {
     console.error('Erro ao carregar registros:', error);
-    tabela.innerHTML = '<tr><td colspan="4" style="text-align: center; color: red;">Erro ao carregar registros</td></tr>';
+    tabela.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Erro ao carregar registros</td></tr>';
   }
 }
 
@@ -107,15 +114,17 @@ if (form) {
     console.log('Formulário enviado');
     
     const nome = document.getElementById('nome').value.trim();
+    const data_registro = document.getElementById('data_registro').value;
+    const numero_pdv = document.getElementById('numero_pdv').value.trim();
     const tvStr = document.getElementById('tv').value;
     const trStr = document.getElementById('tr').value;
     const cupons = parseInt(document.getElementById('cupons').value);
     const itens = parseInt(document.getElementById('itens').value);
 
-    console.log('Dados do formulário:', { nome, tvStr, trStr, cupons, itens, user_id });
+    console.log('Dados do formulário:', { nome, data_registro, numero_pdv, tvStr, trStr, cupons, itens, user_id });
 
     // Validações básicas
-    if (!nome || !tvStr || !trStr || !cupons || !itens) {
+    if (!nome || !data_registro || !numero_pdv || !tvStr || !trStr || !cupons || !itens) {
       alert('Por favor, preencha todos os campos!');
       return;
     }
@@ -153,7 +162,9 @@ if (form) {
     console.log(`TMR = ${tvSegundos} seg / ${itens} itens = ${tmr} seg/item`);
 
     const dadosParaEnvio = { 
-      nome_operador: nome, 
+      nome_operador: nome,
+      data_registro: data_registro,
+      numero_pdv: numero_pdv,
       tma, 
       tmr, 
       user_id: parseInt(user_id) 
@@ -193,6 +204,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (tabela) carregarRegistros();
   if (user_nome && document.getElementById('usuario-logado')) {
     document.getElementById('usuario-logado').innerText = user_nome;
+  }
+  
+  // Definir data atual por padrão
+  const dataInput = document.getElementById('data_registro');
+  if (dataInput) {
+    const hoje = new Date();
+    const dataFormatada = hoje.toISOString().split('T')[0]; // YYYY-MM-DD
+    dataInput.value = dataFormatada;
   }
 });
 
