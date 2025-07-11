@@ -119,6 +119,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(80), unique=True, nullable=False)
     senha_hash = db.Column(db.String(128), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
     registros = db.relationship('Registro', backref='user', lazy=True)
 
 class Registro(db.Model):
@@ -185,77 +186,7 @@ def dashboard_page():
 def index_page():
     return render_template("index.html")
 
-@app.route("/teste")
-def teste_page():
-    try:
-        return render_template("teste.html")
-    except Exception as e:
-        print(f"❌ Erro ao renderizar teste.html: {e}")
-        return f"Erro ao carregar teste.html: {str(e)}", 500
 
-@app.route("/teste-postgresql")
-def teste_postgresql_page():
-    try:
-        print("🧪 Acessando rota /teste-postgresql")
-        return render_template("teste_postgresql.html")
-    except Exception as e:
-        print(f"❌ Erro ao renderizar teste_postgresql.html: {e}")
-        return f"Erro ao carregar teste_postgresql.html: {str(e)}", 500
-
-@app.route("/teste-postgresql-simples")
-def teste_postgresql_simples():
-    """Versão simples sem template para teste"""
-    return """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Teste PostgreSQL Simples</title>
-        <meta charset="UTF-8">
-    </head>
-    <body>
-        <h1>🧪 Teste PostgreSQL - Versão Simples</h1>
-        <button onclick="testarConexao()">Testar Conexão</button>
-        <div id="resultado"></div>
-        
-        <script>
-        async function testarConexao() {
-            try {
-                const response = await fetch('/health');
-                const data = await response.json();
-                document.getElementById('resultado').innerHTML = 
-                    '<p style="color: green;">✅ Servidor funcionando: ' + data.status + '</p>';
-            } catch (error) {
-                document.getElementById('resultado').innerHTML = 
-                    '<p style="color: red;">❌ Erro: ' + error.message + '</p>';
-            }
-        }
-        </script>
-    </body>
-    </html>
-    """
-
-@app.route("/debug/rotas")
-def debug_rotas():
-    """Lista todas as rotas registradas no Flask"""
-    rotas = []
-    for rule in app.url_map.iter_rules():
-        rotas.append({
-            'endpoint': rule.endpoint,
-            'methods': list(rule.methods),
-            'rule': str(rule)
-        })
-    
-    html = "<h1>🔍 Debug - Rotas Registradas</h1>"
-    html += f"<p>Total de rotas: {len(rotas)}</p>"
-    html += "<table border='1' style='border-collapse: collapse;'>"
-    html += "<tr><th>Rota</th><th>Métodos</th><th>Endpoint</th></tr>"
-    
-    for rota in sorted(rotas, key=lambda x: x['rule']):
-        methods = ', '.join([m for m in rota['methods'] if m not in ['HEAD', 'OPTIONS']])
-        html += f"<tr><td>{rota['rule']}</td><td>{methods}</td><td>{rota['endpoint']}</td></tr>"
-    
-    html += "</table>"
-    return html
 
 # --- API ---
 
@@ -323,7 +254,16 @@ def login():
         user = User.query.filter_by(nome=nome).first()
         if user and user.senha_hash == hash_senha(senha):
             session['user_id'] = user.id
-            return jsonify({"ok": True, "user_id": user.id, "nome": user.nome})
+            
+            # Debug: verificar is_admin
+            print(f"🔍 DEBUG LOGIN - User: {user.nome}, ID: {user.id}, is_admin: {user.is_admin}")
+            
+            return jsonify({
+                "ok": True, 
+                "user_id": user.id, 
+                "nome": user.nome,
+                "is_admin": user.is_admin
+            })
         
         return jsonify({"erro": "Usuário ou senha inválidos"}), 401
         
@@ -335,6 +275,19 @@ def login():
 def logout():
     session.pop('user_id', None)
     return jsonify({"ok": True})
+
+def verificar_admin():
+    """Verifica se o usuário atual é admin"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return False
+        
+        user = User.query.get(user_id)
+        return user and user.is_admin
+    except Exception as e:
+        print(f"❌ Erro ao verificar admin: {e}")
+        return False
 
 @app.route("/api/registros", methods=["POST"])
 def registrar_tempo():
@@ -456,167 +409,365 @@ def listar_registros(user_id):
         print(f"Erro ao listar registros: {str(e)}")
         return jsonify({"erro": f"Erro interno: {str(e)}"}), 500
 
-@app.route("/api/registros/clear/<int:user_id>", methods=["DELETE"])
-def deletar_registros(user_id):
-    regs = Registro.query.filter_by(user_id=user_id).all()
-    for r in regs:
-        db.session.delete(r)
-    db.session.commit()
-    return jsonify({"ok": True})
 
-@app.route("/api/reset", methods=["POST"])
-def reset_db():
-    db.drop_all()
-    db.create_all()
-    return jsonify({"ok": True})
 
-@app.route("/api/reset-db", methods=["POST"])
-def reset_database():
-    """Reseta o banco de dados - CUIDADO: apaga todos os dados!"""
-    try:
-        # Remove todas as tabelas
-        db.drop_all()
-        # Recria todas as tabelas
-        db.create_all()
-        return jsonify({"ok": True, "message": "Banco de dados resetado com sucesso"})
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
+@app.route("/admin")
+def admin_dashboard():
+    """Painel administrativo principal"""
+    if not verificar_admin():
+        return redirect(url_for('login_page'))
+    return render_template("admin.html")
 
-@app.route("/api/init-db", methods=["POST"])
-def init_database():
-    """Inicializa o banco de dados se não existir"""
-    try:
-        db.create_all()
-        return jsonify({"ok": True, "message": "Banco de dados inicializado"})
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
-
-@app.route("/api/usuarios", methods=["GET"])
-def listar_usuarios():
-    """Lista todos os usuários (para debug) - REMOVER EM PRODUÇÃO"""
-    try:
-        users = User.query.all()
-        return jsonify([{
-            "id": u.id,
-            "nome": u.nome,
-            "total_registros": len(u.registros)
-        } for u in users])
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
-
-@app.route("/debug/database")
-def debug_database():
-    """Rota para visualizar todos os dados do banco - APENAS PARA DEBUG"""
-    try:
-        users = User.query.all()
-        registros = Registro.query.all()
-        
-        html = "<h1>🗃️ Debug do Banco de Dados</h1>"
-        
-        html += f"<h2>👥 Usuários ({len(users)} total):</h2><ul>"
-        for user in users:
-            html += f"<li>ID: {user.id} | Nome: {user.nome} | Registros: {len(user.registros)}</li>"
-        html += "</ul>"
-        
-        html += f"<h2>📊 Registros ({len(registros)} total):</h2><table border='1' style='border-collapse: collapse;'>"
-        html += "<tr><th>ID</th><th>Operador</th><th>TMA</th><th>TMR</th><th>Data</th><th>PDV</th><th>User ID</th></tr>"
-        
-        for reg in registros:
-            data_formatada = reg.data_registro.strftime('%d/%m/%Y') if hasattr(reg, 'data_registro') and reg.data_registro else 'N/A'
-            numero_pdv = getattr(reg, 'numero_pdv', 'N/A')
-            html += f"<tr><td>{reg.id}</td><td>{reg.nome_operador}</td><td>{reg.tma}</td><td>{reg.tmr}</td><td>{data_formatada}</td><td>{numero_pdv}</td><td>{reg.user_id}</td></tr>"
-        
-        html += '</table>'
-        html += "<br><a href='/teste'>← Voltar para teste</a>"
-        
-        return html
-        
-    except Exception as e:
-        return f"<h1>Erro ao acessar banco:</h1><p>{str(e)}</p>"
-
-# Rota de health check para deploy
-@app.route("/health")
-def health_check():
-    return jsonify({"status": "OK", "message": "Sistema TMA/TMR funcionando"})
-
-# Rota de debug para Railway
-@app.route("/debug")
-def debug_info():
-    import sys
-    return jsonify({
-        "status": "OK",
-        "python_version": sys.version,
-        "port": os.environ.get('PORT', 'não definida'),
-        "database_url": "configurada" if os.environ.get('DATABASE_URL') else "não configurada",
-        "flask_env": os.environ.get('FLASK_ENV', 'não definido'),
-        "working_directory": os.getcwd(),
-        "files": os.listdir('.')[:10]  # Primeiros 10 arquivos
-    })
-
-if __name__ == "__main__":
-    print("🚀 Iniciando Sistema TMA/TMR...")
+@app.route("/api/admin/stats")
+def admin_stats():
+    """Estatísticas gerais para o dashboard admin"""
+    if not verificar_admin():
+        return jsonify({"erro": "Acesso negado"}), 403
     
     try:
-        # Configurar porta
+        # Estatísticas gerais
+        total_usuarios = User.query.count()
+        total_registros = Registro.query.count()
+        
+        # Calcular médias gerais
+        from sqlalchemy import func
+        medias = db.session.query(
+            func.avg(Registro.tma).label('tma_medio'),
+            func.avg(Registro.tmr).label('tmr_medio')
+        ).first()
+        
+        tma_geral = round(float(medias.tma_medio), 2) if medias.tma_medio else 0
+        tmr_geral = round(float(medias.tmr_medio), 2) if medias.tmr_medio else 0
+        
+        # Top usuários por registros
+        usuarios_top = db.session.query(
+            User.nome,
+            func.count(Registro.id).label('total_registros')
+        ).join(Registro).group_by(User.nome).order_by(
+            func.count(Registro.id).desc()
+        ).limit(10).all()
+        
+        return jsonify({
+            "total_usuarios": total_usuarios,
+            "total_registros": total_registros,
+            "tma_geral": tma_geral,
+            "tmr_geral": tmr_geral,
+            "usuarios_top": [
+                {
+                    "nome": u.nome,
+                    "total_registros": u.total_registros
+                } for u in usuarios_top
+            ]
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro ao buscar estatísticas: {e}")
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/admin/graficos")
+def admin_graficos():
+    """Dados para gráficos de análise"""
+    if not verificar_admin():
+        return jsonify({"erro": "Acesso negado"}), 403
+    
+    try:
+        from sqlalchemy import func
+        from datetime import datetime, timedelta
+        
+        # Gráfico 1: TMA/TMR por PDV
+        dados_pdv = db.session.query(
+            Registro.numero_pdv,
+            func.avg(Registro.tma).label('tma_medio'),
+            func.avg(Registro.tmr).label('tmr_medio'),
+            func.count(Registro.id).label('total_registros')
+        ).group_by(Registro.numero_pdv).all()
+        
+        # Gráfico 2: Evolução temporal (últimos 30 dias)
+        data_limite = datetime.now().date() - timedelta(days=30)
+        evolucao_temporal = db.session.query(
+            Registro.data_registro,
+            func.avg(Registro.tma).label('tma_medio'),
+            func.avg(Registro.tmr).label('tmr_medio'),
+            func.count(Registro.id).label('total_registros')
+        ).filter(
+            Registro.data_registro >= data_limite
+        ).group_by(Registro.data_registro).order_by(Registro.data_registro).all()
+        
+        # Gráfico 3: Distribuição por operador
+        dados_operador = db.session.query(
+            Registro.nome_operador,
+            func.avg(Registro.tma).label('tma_medio'),
+            func.avg(Registro.tmr).label('tmr_medio'),
+            func.count(Registro.id).label('total_registros')
+        ).group_by(Registro.nome_operador).order_by(
+            func.count(Registro.id).desc()
+        ).limit(10).all()
+        
+        return jsonify({
+            "pdv_data": [
+                {
+                    "pdv": d.numero_pdv,
+                    "tma_medio": round(float(d.tma_medio), 2),
+                    "tmr_medio": round(float(d.tmr_medio), 2),
+                    "total_registros": d.total_registros
+                } for d in dados_pdv
+            ],
+            "evolucao_temporal": [
+                {
+                    "data": d.data_registro.strftime('%Y-%m-%d'),
+                    "tma_medio": round(float(d.tma_medio), 2),
+                    "tmr_medio": round(float(d.tmr_medio), 2),
+                    "total_registros": d.total_registros
+                } for d in evolucao_temporal
+            ],
+            "operadores_data": [
+                {
+                    "operador": d.nome_operador,
+                    "tma_medio": round(float(d.tma_medio), 2),
+                    "tmr_medio": round(float(d.tmr_medio), 2),
+                    "total_registros": d.total_registros
+                } for d in dados_operador
+            ]
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro ao buscar dados para gráficos: {e}")
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/admin/top-tempos")
+def admin_top_tempos():
+    """Top 10 melhores e piores tempos de TMA e TMR"""
+    if not verificar_admin():
+        return jsonify({"erro": "Acesso negado"}), 403
+    
+    try:
+        from sqlalchemy import func
+        
+        # Top 10 melhores TMA (menores tempos)
+        melhores_tma = db.session.query(
+            Registro.nome_operador,
+            Registro.numero_pdv,
+            Registro.tma,
+            Registro.data_registro,
+            User.nome.label('usuario_nome')
+        ).join(User).order_by(Registro.tma.asc()).limit(10).all()
+        
+        # Top 10 piores TMA (maiores tempos)
+        piores_tma = db.session.query(
+            Registro.nome_operador,
+            Registro.numero_pdv,
+            Registro.tma,
+            Registro.data_registro,
+            User.nome.label('usuario_nome')
+        ).join(User).order_by(Registro.tma.desc()).limit(10).all()
+        
+        # Top 10 melhores TMR (menores tempos)
+        melhores_tmr = db.session.query(
+            Registro.nome_operador,
+            Registro.numero_pdv,
+            Registro.tmr,
+            Registro.data_registro,
+            User.nome.label('usuario_nome')
+        ).join(User).order_by(Registro.tmr.asc()).limit(10).all()
+        
+        # Top 10 piores TMR (maiores tempos)
+        piores_tmr = db.session.query(
+            Registro.nome_operador,
+            Registro.numero_pdv,
+            Registro.tmr,
+            Registro.data_registro,
+            User.nome.label('usuario_nome')
+        ).join(User).order_by(Registro.tmr.desc()).limit(10).all()
+        
+        return jsonify({
+            "melhores_tma": [
+                {
+                    "nome_operador": r.nome_operador,
+                    "numero_pdv": r.numero_pdv,
+                    "tma": r.tma,
+                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
+                    "usuario_nome": r.usuario_nome
+                } for r in melhores_tma
+            ],
+            "piores_tma": [
+                {
+                    "nome_operador": r.nome_operador,
+                    "numero_pdv": r.numero_pdv,
+                    "tma": r.tma,
+                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
+                    "usuario_nome": r.usuario_nome
+                } for r in piores_tma
+            ],
+            "melhores_tmr": [
+                {
+                    "nome_operador": r.nome_operador,
+                    "numero_pdv": r.numero_pdv,
+                    "tmr": r.tmr,
+                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
+                    "usuario_nome": r.usuario_nome
+                } for r in melhores_tmr
+            ],
+            "piores_tmr": [
+                {
+                    "nome_operador": r.nome_operador,
+                    "numero_pdv": r.numero_pdv,
+                    "tmr": r.tmr,
+                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
+                    "usuario_nome": r.usuario_nome
+                } for r in piores_tmr
+            ]
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro ao buscar top tempos: {e}")
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/admin/usuarios")
+def admin_usuarios():
+    """Lista todos os usuários para o painel admin"""
+    if not verificar_admin():
+        return jsonify({"erro": "Acesso negado"}), 403
+    
+    try:
+        usuarios = User.query.all()
+        
+        usuarios_data = []
+        for user in usuarios:
+            # Buscar registros do usuário
+            registros_user = Registro.query.filter_by(user_id=user.id).all()
+            
+            # Preparar dados dos registros
+            registros_data = []
+            for registro in registros_user:
+                registros_data.append({
+                    "id": registro.id,
+                    "data_registro": registro.data_registro.strftime("%d/%m/%Y"),
+                    "nome_operador": registro.nome_operador,
+                    "numero_pdv": registro.numero_pdv,
+                    "tma": registro.tma,
+                    "tmr": registro.tmr
+                })
+            
+            usuarios_data.append({
+                "id": user.id,
+                "nome": user.nome,
+                "is_admin": user.is_admin,
+                "total_registros": len(registros_data),
+                "registros": registros_data
+            })
+        
+        return jsonify({
+            "usuarios": usuarios_data,
+            "total": len(usuarios_data)
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro ao buscar usuários: {e}")
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/admin/registros")
+def admin_registros():
+    """Lista todos os registros para o painel admin"""
+    if not verificar_admin():
+        return jsonify({"erro": "Acesso negado"}), 403
+    
+    try:
+        registros = Registro.query.order_by(Registro.data_registro.desc()).all()
+        
+        registros_data = []
+        for registro in registros:
+            registros_data.append({
+                "id": registro.id,
+                "nome_operador": registro.nome_operador,
+                "tma": registro.tma,
+                "tmr": registro.tmr,
+                "data_registro": registro.data_registro.strftime("%d/%m/%Y"),
+                "numero_pdv": registro.numero_pdv,
+                "user_id": registro.user_id,
+                "usuario_nome": registro.user.nome if registro.user else "N/A"
+            })
+        
+        return jsonify({
+            "registros": registros_data,
+            "total": len(registros_data)
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro ao buscar registros: {e}")
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/admin/usuarios/<int:user_id>", methods=["DELETE"])
+def deletar_usuario_admin(user_id):
+    """Deleta um usuário e todos seus registros (admin)"""
+    if not verificar_admin():
+        return jsonify({"erro": "Acesso negado"}), 403
+    
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"erro": "Usuário não encontrado"}), 404
+        
+        # Não permitir deletar outros admins
+        if user.is_admin:
+            return jsonify({"erro": "Não é possível deletar outros administradores"}), 403
+        
+        nome_usuario = user.nome
+        
+        # Deletar todos os registros do usuário primeiro
+        Registro.query.filter_by(user_id=user_id).delete()
+        
+        # Deletar o usuário
+        db.session.delete(user)
+        db.session.commit()
+        
+        return jsonify({"ok": True, "message": f"Usuário '{nome_usuario}' deletado com sucesso"})
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erro ao deletar usuário: {e}")
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/admin/registros/<int:registro_id>", methods=["DELETE"])
+def deletar_registro_admin(registro_id):
+    """Deleta um registro específico (admin)"""
+    if not verificar_admin():
+        return jsonify({"erro": "Acesso negado"}), 403
+    
+    try:
+        registro = Registro.query.get(registro_id)
+        if not registro:
+            return jsonify({"erro": "Registro não encontrado"}), 404
+        
+        db.session.delete(registro)
+        db.session.commit()
+        
+        return jsonify({"ok": True, "message": "Registro deletado com sucesso"})
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erro ao deletar registro: {e}")
+        return jsonify({"erro": str(e)}), 500
+
+if __name__ == "__main__":
+    print("� Iniciando Sistema TMA/TMR...")
+    
+    try:
         port = int(os.environ.get('PORT', 5000))
-        print(f"📡 Porta configurada: {port}")
         
         # Criar diretório instance se não existir (para SQLite local)
         if not os.environ.get('DATABASE_URL'):
             os.makedirs('instance', exist_ok=True)
-            print("📁 Diretório instance criado para SQLite")
         
         # Criar tabelas automaticamente se não existirem
         with app.app_context():
-            try:
-                # Para PostgreSQL, garantir que as tabelas sejam criadas com encoding correto
-                if 'postgresql' in app.config['SQLALCHEMY_DATABASE_URI']:
-                    print("🐘 Configurando tabelas PostgreSQL...")
-                    db.create_all()
-                    print("✅ Tabelas PostgreSQL criadas com sucesso")
-                    
-                    # Testar se consegue fazer uma query simples
-                    test_user_count = User.query.count()
-                    test_registro_count = Registro.query.count()
-                    print(f"📊 Estado atual: {test_user_count} usuários, {test_registro_count} registros")
-                    
-                else:
-                    db.create_all()
-                    print("✅ Banco de dados inicializado com sucesso")
-            except Exception as db_error:
-                print(f"⚠️ Aviso no banco de dados: {str(db_error)}")
-                # Tentar criar as tabelas uma por vez se houver erro
-                try:
-                    print("🔄 Tentando criar tabelas individualmente...")
-                    db.create_all()
-                    print("✅ Tabelas criadas com sucesso na segunda tentativa")
-                except Exception as retry_error:
-                    print(f"❌ Erro persistente: {str(retry_error)}")
-                    print("🔄 Aplicação continuará, mas pode haver problemas com o banco")
+            db.create_all()
+            print("✅ Banco de dados inicializado")
         
-        print(f"🌐 Servidor iniciando em 0.0.0.0:{port}")
-        print("🔗 Acesse /health para verificar status")
-        print("🧪 Acesse /teste-postgresql para testar PostgreSQL")
+        print(f"🌐 Servidor rodando em http://localhost:{port}")
         print("📱 Acesse /login para usar a aplicação")
         
-        # Iniciar servidor
-        app.run(
-            host='0.0.0.0', 
-            port=port, 
-            debug=False,
-            threaded=True
-        )
+        app.run(host='0.0.0.0', port=port, debug=False)
         
     except Exception as e:
-        print(f"❌ Erro crítico ao iniciar aplicação: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        
-        # Última tentativa - servidor básico
-        try:
-            port = int(os.environ.get('PORT', 5000))
-            print(f"🔄 Tentativa de emergência na porta {port}")
-            app.run(host='0.0.0.0', port=port, debug=False)
-        except:
-            print("💥 Falha total ao iniciar servidor")
-            raise
+        print(f"❌ Erro ao iniciar: {str(e)}")
+        raise

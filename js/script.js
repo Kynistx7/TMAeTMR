@@ -3,8 +3,9 @@ const META_TMR = 6.00;
 
 let user_id = localStorage.getItem('user_id');
 let user_nome = localStorage.getItem('user_nome');
+let is_admin = localStorage.getItem('is_admin') === 'true';
 
-console.log('Dados do usuário:', { user_id, user_nome });
+console.log('Dados do usuário:', { user_id, user_nome, is_admin });
 
 // Redireciona se não logado
 if (!user_id && (window.location.pathname.includes("tempos") || window.location.pathname.includes("index.html"))) {
@@ -200,11 +201,14 @@ if (form) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   if (tabela) carregarRegistros();
   if (user_nome && document.getElementById('usuario-logado')) {
     document.getElementById('usuario-logado').innerText = user_nome;
   }
+  
+  // Verificar se usuário é admin consultando a API
+  await verificarStatusAdmin();
   
   // Definir data atual por padrão
   const dataInput = document.getElementById('data_registro');
@@ -214,6 +218,31 @@ document.addEventListener('DOMContentLoaded', () => {
     dataInput.value = dataFormatada;
   }
 });
+
+// Função para verificar se usuário é admin
+async function verificarStatusAdmin() {
+  if (!user_id) return;
+  
+  try {
+    const response = await fetch('/api/admin/stats');
+    if (response.status === 200) {
+      // Se conseguiu acessar a rota admin, é admin
+      const adminBtn = document.getElementById('admin-btn');
+      if (adminBtn) {
+        adminBtn.style.display = 'inline-block';
+      }
+      localStorage.setItem('is_admin', 'true');
+      console.log('Usuário é administrador');
+    } else if (response.status === 403) {
+      // Não é admin
+      localStorage.setItem('is_admin', 'false');
+      console.log('Usuário não é administrador');
+    }
+  } catch (error) {
+    console.log('Erro ao verificar status admin:', error);
+    localStorage.setItem('is_admin', 'false');
+  }
+}
 
 // Limpar registros do usuário
 if (limparBtn) {
