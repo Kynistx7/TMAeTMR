@@ -877,6 +877,52 @@ def deletar_registro_admin(registro_id):
         print(f"❌ Erro ao deletar registro: {e}")
         return jsonify({"erro": str(e)}), 500
 
+# Rota específica para healthcheck do Railway
+@app.route("/health")
+def health_check():
+    """Endpoint de healthcheck para Railway"""
+    try:
+        # Testar conexão com banco de dados
+        with app.app_context():
+            db.session.execute(db.text("SELECT 1"))
+        
+        return jsonify({
+            "status": "healthy",
+            "service": "TMA/TMR System",
+            "timestamp": datetime.now().isoformat(),
+            "database": "connected"
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+# Rota para diagnostico completo (apenas para desenvolvimento/debug)
+@app.route("/debug")
+def debug_info():
+    """Endpoint de debug para diagnosticar problemas (remover em produção)"""
+    if not os.environ.get('RAILWAY_ENVIRONMENT'):
+        # Só permite debug em ambiente não-produção
+        try:
+            import platform
+            return jsonify({
+                "python_version": platform.python_version(),
+                "flask_version": Flask.__version__,
+                "database_url": "configured" if os.environ.get('DATABASE_URL') else "not_configured",
+                "railway_env": os.environ.get('RAILWAY_ENVIRONMENT', 'not_set'),
+                "port": os.environ.get('PORT', '5000'),
+                "secret_key": "configured" if app.config.get('SECRET_KEY') else "not_configured",
+                "tables": [table.name for table in db.metadata.tables.values()],
+                "total_users": User.query.count(),
+                "total_registros": Registro.query.count()
+            })
+        except Exception as e:
+            return jsonify({"debug_error": str(e)}), 500
+    else:
+        return jsonify({"message": "Debug not available in production"}), 403
+
 if __name__ == "__main__":
     print("🚀 Iniciando Sistema TMA/TMR...")
     
