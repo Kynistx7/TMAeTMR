@@ -543,6 +543,10 @@ def admin_top_tempos():
     try:
         from sqlalchemy import func
         
+        # Metas configuráveis (em segundos)
+        META_TMA = 180.0  # 3 minutos
+        META_TMR = 120.0  # 2 minutos
+        
         # Top 10 melhores TMA (menores tempos)
         melhores_tma = db.session.query(
             Registro.nome_operador,
@@ -552,14 +556,14 @@ def admin_top_tempos():
             User.nome.label('usuario_nome')
         ).join(User).order_by(Registro.tma.asc()).limit(10).all()
         
-        # Top 10 piores TMA (maiores tempos)
+        # Top 10 piores TMA (apenas tempos ACIMA da meta)
         piores_tma = db.session.query(
             Registro.nome_operador,
             Registro.numero_pdv,
             Registro.tma,
             Registro.data_registro,
             User.nome.label('usuario_nome')
-        ).join(User).order_by(Registro.tma.desc()).limit(10).all()
+        ).join(User).filter(Registro.tma > META_TMA).order_by(Registro.tma.desc()).limit(10).all()
         
         # Top 10 melhores TMR (menores tempos)
         melhores_tmr = db.session.query(
@@ -570,23 +574,26 @@ def admin_top_tempos():
             User.nome.label('usuario_nome')
         ).join(User).order_by(Registro.tmr.asc()).limit(10).all()
         
-        # Top 10 piores TMR (maiores tempos)
+        # Top 10 piores TMR (apenas tempos ACIMA da meta)
         piores_tmr = db.session.query(
             Registro.nome_operador,
             Registro.numero_pdv,
             Registro.tmr,
             Registro.data_registro,
             User.nome.label('usuario_nome')
-        ).join(User).order_by(Registro.tmr.desc()).limit(10).all()
+        ).join(User).filter(Registro.tmr > META_TMR).order_by(Registro.tmr.desc()).limit(10).all()
         
         return jsonify({
+            "meta_tma": META_TMA,
+            "meta_tmr": META_TMR,
             "melhores_tma": [
                 {
                     "nome_operador": r.nome_operador,
                     "numero_pdv": r.numero_pdv,
                     "tma": r.tma,
                     "data_registro": r.data_registro.strftime('%d/%m/%Y'),
-                    "usuario_nome": r.usuario_nome
+                    "usuario_nome": r.usuario_nome,
+                    "dentro_meta": r.tma <= META_TMA
                 } for r in melhores_tma
             ],
             "piores_tma": [
@@ -595,7 +602,8 @@ def admin_top_tempos():
                     "numero_pdv": r.numero_pdv,
                     "tma": r.tma,
                     "data_registro": r.data_registro.strftime('%d/%m/%Y'),
-                    "usuario_nome": r.usuario_nome
+                    "usuario_nome": r.usuario_nome,
+                    "acima_meta": r.tma > META_TMA
                 } for r in piores_tma
             ],
             "melhores_tmr": [
@@ -604,7 +612,8 @@ def admin_top_tempos():
                     "numero_pdv": r.numero_pdv,
                     "tmr": r.tmr,
                     "data_registro": r.data_registro.strftime('%d/%m/%Y'),
-                    "usuario_nome": r.usuario_nome
+                    "usuario_nome": r.usuario_nome,
+                    "dentro_meta": r.tmr <= META_TMR
                 } for r in melhores_tmr
             ],
             "piores_tmr": [
@@ -613,13 +622,133 @@ def admin_top_tempos():
                     "numero_pdv": r.numero_pdv,
                     "tmr": r.tmr,
                     "data_registro": r.data_registro.strftime('%d/%m/%Y'),
-                    "usuario_nome": r.usuario_nome
+                    "usuario_nome": r.usuario_nome,
+                    "acima_meta": r.tmr > META_TMR
                 } for r in piores_tmr
             ]
         })
         
     except Exception as e:
         print(f"❌ Erro ao buscar top tempos: {e}")
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/admin/top-tempos-diario")
+def admin_top_tempos_diario():
+    """Top 10 melhores e piores tempos de TMA e TMR do dia atual"""
+    if not verificar_admin():
+        return jsonify({"erro": "Acesso negado"}), 403
+    
+    try:
+        from sqlalchemy import func
+        from datetime import date
+        
+        # Metas configuráveis (em segundos)
+        META_TMA = 180.0  # 3 minutos
+        META_TMR = 120.0  # 2 minutos
+        
+        # Data de hoje
+        hoje = date.today()
+        
+        # Top 10 melhores TMA do dia (menores tempos)
+        melhores_tma_hoje = db.session.query(
+            Registro.nome_operador,
+            Registro.numero_pdv,
+            Registro.tma,
+            Registro.data_registro,
+            User.nome.label('usuario_nome')
+        ).join(User).filter(
+            Registro.data_registro == hoje
+        ).order_by(Registro.tma.asc()).limit(10).all()
+        
+        # Top 10 piores TMA do dia (apenas tempos ACIMA da meta)
+        piores_tma_hoje = db.session.query(
+            Registro.nome_operador,
+            Registro.numero_pdv,
+            Registro.tma,
+            Registro.data_registro,
+            User.nome.label('usuario_nome')
+        ).join(User).filter(
+            Registro.data_registro == hoje,
+            Registro.tma > META_TMA
+        ).order_by(Registro.tma.desc()).limit(10).all()
+        
+        # Top 10 melhores TMR do dia (menores tempos)
+        melhores_tmr_hoje = db.session.query(
+            Registro.nome_operador,
+            Registro.numero_pdv,
+            Registro.tmr,
+            Registro.data_registro,
+            User.nome.label('usuario_nome')
+        ).join(User).filter(
+            Registro.data_registro == hoje
+        ).order_by(Registro.tmr.asc()).limit(10).all()
+        
+        # Top 10 piores TMR do dia (apenas tempos ACIMA da meta)
+        piores_tmr_hoje = db.session.query(
+            Registro.nome_operador,
+            Registro.numero_pdv,
+            Registro.tmr,
+            Registro.data_registro,
+            User.nome.label('usuario_nome')
+        ).join(User).filter(
+            Registro.data_registro == hoje,
+            Registro.tmr > META_TMR
+        ).order_by(Registro.tmr.desc()).limit(10).all()
+        
+        # Contar total de registros do dia
+        total_registros_hoje = db.session.query(Registro).filter(
+            Registro.data_registro == hoje
+        ).count()
+        
+        return jsonify({
+            "data_consulta": hoje.strftime('%d/%m/%Y'),
+            "total_registros_hoje": total_registros_hoje,
+            "meta_tma": META_TMA,
+            "meta_tmr": META_TMR,
+            "melhores_tma_hoje": [
+                {
+                    "nome_operador": r.nome_operador,
+                    "numero_pdv": r.numero_pdv,
+                    "tma": r.tma,
+                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
+                    "usuario_nome": r.usuario_nome,
+                    "dentro_meta": r.tma <= META_TMA
+                } for r in melhores_tma_hoje
+            ],
+            "piores_tma_hoje": [
+                {
+                    "nome_operador": r.nome_operador,
+                    "numero_pdv": r.numero_pdv,
+                    "tma": r.tma,
+                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
+                    "usuario_nome": r.usuario_nome,
+                    "acima_meta": r.tma > META_TMA
+                } for r in piores_tma_hoje
+            ],
+            "melhores_tmr_hoje": [
+                {
+                    "nome_operador": r.nome_operador,
+                    "numero_pdv": r.numero_pdv,
+                    "tmr": r.tmr,
+                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
+                    "usuario_nome": r.usuario_nome,
+                    "dentro_meta": r.tmr <= META_TMR
+                } for r in melhores_tmr_hoje
+            ],
+            "piores_tmr_hoje": [
+                {
+                    "nome_operador": r.nome_operador,
+                    "numero_pdv": r.numero_pdv,
+                    "tmr": r.tmr,
+                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
+                    "usuario_nome": r.usuario_nome,
+                    "acima_meta": r.tmr > META_TMR
+                } for r in piores_tmr_hoje
+            ]
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro ao buscar top tempos diário: {e}")
         return jsonify({"erro": str(e)}), 500
 
 @app.route("/api/admin/usuarios")
@@ -749,24 +878,59 @@ def deletar_registro_admin(registro_id):
         return jsonify({"erro": str(e)}), 500
 
 if __name__ == "__main__":
-    print("� Iniciando Sistema TMA/TMR...")
+    print("🚀 Iniciando Sistema TMA/TMR...")
     
     try:
+        # Porta para Railway ou local
         port = int(os.environ.get('PORT', 5000))
         
-        # Criar diretório instance se não existir (para SQLite local)
-        if not os.environ.get('DATABASE_URL'):
+        # Para Railway, não criar diretório instance (usa PostgreSQL)
+        # Para local, criar instance se não existir (para SQLite local)
+        if not os.environ.get('DATABASE_URL') and not os.environ.get('RAILWAY_ENVIRONMENT'):
             os.makedirs('instance', exist_ok=True)
+            print("📁 Diretório instance criado para SQLite local")
         
         # Criar tabelas automaticamente se não existirem
         with app.app_context():
             db.create_all()
+            
+            # Criar admin padrão se não existir (apenas em produção/Railway)
+            if os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('DATABASE_URL'):
+                admin_exists = User.query.filter_by(nome='admin').first()
+                if not admin_exists:
+                    admin_user = User(
+                        nome='admin',
+                        senha_hash=hash_senha('admin123'),
+                        is_admin=True
+                    )
+                    db.session.add(admin_user)
+                    db.session.commit()
+                    print("👑 Usuário admin criado: admin/admin123")
+                else:
+                    print("👑 Usuário admin já existe")
+            
             print("✅ Banco de dados inicializado")
         
-        print(f"🌐 Servidor rodando em http://localhost:{port}")
-        print("📱 Acesse /login para usar a aplicação")
+        # Detectar ambiente
+        is_railway = os.environ.get('RAILWAY_ENVIRONMENT') is not None
+        is_production = os.environ.get('DATABASE_URL') is not None
         
-        app.run(host='0.0.0.0', port=port, debug=False)
+        if is_railway:
+            print(f"🚂 Rodando no Railway na porta {port}")
+            print("🌐 Acesse sua aplicação na URL fornecida pelo Railway")
+        else:
+            print(f"🌐 Servidor local rodando em http://localhost:{port}")
+            print("📱 Acesse /login para usar a aplicação")
+        
+        # Configurações otimizadas para produção
+        debug_mode = not (is_railway or is_production)
+        
+        app.run(
+            host='0.0.0.0', 
+            port=port, 
+            debug=debug_mode,
+            threaded=True
+        )
         
     except Exception as e:
         print(f"❌ Erro ao iniciar: {str(e)}")

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Sistema TMA/TMR</title>
-    <link rel="stylesheet" href="css/admin.css?v=8.0">
+    <link rel="stylesheet" href="css/admin.css?v=9.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
@@ -85,25 +85,65 @@
         <!-- Aba Top 10 -->
         <div id="top-tempos" class="tab-content">
             <h2>🏆 Top 10 - Melhores e Piores Tempos</h2>
-            <div class="top-container">
-                <div class="top-section">
-                    <h3>✅ Top 10 Melhores TMA (Menores Tempos)</h3>
-                    <div id="melhoresTMA" class="loading">Carregando...</div>
+            
+            <!-- Seletor de Período -->
+            <div class="periodo-selector">
+                <button id="btn-geral" class="periodo-btn active" onclick="mostrarPeriodo('geral')">📊 Geral (Todos os Tempos)</button>
+                <button id="btn-diario" class="periodo-btn" onclick="mostrarPeriodo('diario')">📅 Diário (Hoje)</button>
+            </div>
+            
+            <!-- Top 10 Geral -->
+            <div id="top-geral" class="periodo-content active">
+                <h3 class="periodo-title">📊 Ranking Geral de Todos os Tempos</h3>
+                <div class="top-container">
+                    <div class="top-section">
+                        <h3>✅ Top 10 Melhores TMA (Menores Tempos)</h3>
+                        <div id="melhoresTMA" class="loading">Carregando...</div>
+                    </div>
+                    
+                    <div class="top-section">
+                        <h3>⚠️ Top 10 Piores TMA (Maiores Tempos)</h3>
+                        <div id="pioresTMA" class="loading">Carregando...</div>
+                    </div>
+                    
+                    <div class="top-section">
+                        <h3>✅ Top 10 Melhores TMR (Menores Tempos)</h3>
+                        <div id="melhoresTMR" class="loading">Carregando...</div>
+                    </div>
+                    
+                    <div class="top-section">
+                        <h3>⚠️ Top 10 Piores TMR (Maiores Tempos)</h3>
+                        <div id="pioresTMR" class="loading">Carregando...</div>
+                    </div>
                 </div>
-                
-                <div class="top-section">
-                    <h3>⚠️ Top 10 Piores TMA (Maiores Tempos)</h3>
-                    <div id="pioresTMA" class="loading">Carregando...</div>
+            </div>
+            
+            <!-- Top 10 Diário -->
+            <div id="top-diario" class="periodo-content">
+                <h3 class="periodo-title">📅 Ranking do Dia - <span id="data-hoje">11/07/2025</span></h3>
+                <div class="top-info">
+                    <p>Total de registros hoje: <span id="total-hoje">-</span></p>
                 </div>
-                
-                <div class="top-section">
-                    <h3>✅ Top 10 Melhores TMR (Menores Tempos)</h3>
-                    <div id="melhoresTMR" class="loading">Carregando...</div>
-                </div>
-                
-                <div class="top-section">
-                    <h3>⚠️ Top 10 Piores TMR (Maiores Tempos)</h3>
-                    <div id="pioresTMR" class="loading">Carregando...</div>
+                <div class="top-container">
+                    <div class="top-section">
+                        <h3>✅ Top 10 Melhores TMA Hoje</h3>
+                        <div id="melhoresTMAHoje" class="loading">Carregando...</div>
+                    </div>
+                    
+                    <div class="top-section">
+                        <h3>⚠️ Top 10 Piores TMA Hoje</h3>
+                        <div id="pioresTMAHoje" class="loading">Carregando...</div>
+                    </div>
+                    
+                    <div class="top-section">
+                        <h3>✅ Top 10 Melhores TMR Hoje</h3>
+                        <div id="melhoresTMRHoje" class="loading">Carregando...</div>
+                    </div>
+                    
+                    <div class="top-section">
+                        <h3>⚠️ Top 10 Piores TMR Hoje</h3>
+                        <div id="pioresTMRHoje" class="loading">Carregando...</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -130,7 +170,33 @@
                 carregarRelatorios();
             } else if (tabName === 'top-tempos') {
                 carregarTopTempos();
+                atualizarDataHoje();
             }
+        }
+
+        // Função para mostrar período (Geral ou Diário)
+        function mostrarPeriodo(periodo) {
+            // Remover classe active dos botões
+            document.querySelectorAll('.periodo-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.periodo-content').forEach(content => content.classList.remove('active'));
+            
+            // Ativar período selecionado
+            document.getElementById(`btn-${periodo}`).classList.add('active');
+            document.getElementById(`top-${periodo}`).classList.add('active');
+            
+            // Carregar dados específicos
+            if (periodo === 'geral') {
+                carregarTopTempos();
+            } else if (periodo === 'diario') {
+                carregarTopTemposDiario();
+            }
+        }
+
+        // Atualizar data de hoje
+        function atualizarDataHoje() {
+            const hoje = new Date();
+            const dataFormatada = hoje.toLocaleDateString('pt-BR');
+            document.getElementById('data-hoje').textContent = dataFormatada;
         }
 
         // Carregar estatísticas gerais
@@ -589,9 +655,15 @@
                     throw new Error(data.erro);
                 }
                 
+                const metaTMA = data.meta_tma;
+                const metaTMR = data.meta_tmr;
+                
                 // Melhores TMA
                 const melhoresTMA = document.getElementById('melhoresTMA');
                 melhoresTMA.innerHTML = `
+                    <div class="meta-info">
+                        <small>🎯 Meta TMA: ${metaTMA} segundos</small>
+                    </div>
                     <table class="top-table">
                         <thead>
                             <tr>
@@ -609,7 +681,7 @@
                                     <td class="pos-numero">${index + 1}°</td>
                                     <td>${registro.nome_operador}</td>
                                     <td>PDV ${registro.numero_pdv}</td>
-                                    <td class="tempo-destaque">${registro.tma} min/cupom</td>
+                                    <td class="tempo-destaque ${registro.dentro_meta ? 'tempo-meta' : ''}">${registro.tma}s</td>
                                     <td>${registro.data_registro}</td>
                                     <td>${registro.usuario_nome}</td>
                                 </tr>
@@ -618,38 +690,56 @@
                     </table>
                 `;
                 
-                // Piores TMA
+                // Piores TMA (apenas tempos acima da meta)
                 const pioresTMA = document.getElementById('pioresTMA');
-                pioresTMA.innerHTML = `
-                    <table class="top-table">
-                        <thead>
-                            <tr>
-                                <th>Pos.</th>
-                                <th>Operador</th>
-                                <th>PDV</th>
-                                <th>TMA</th>
-                                <th>Data</th>
-                                <th>Usuário</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.piores_tma.map((registro, index) => `
-                                <tr class="top-pior">
-                                    <td class="pos-numero">${index + 1}°</td>
-                                    <td>${registro.nome_operador}</td>
-                                    <td>PDV ${registro.numero_pdv}</td>
-                                    <td class="tempo-destaque">${registro.tma} min/cupom</td>
-                                    <td>${registro.data_registro}</td>
-                                    <td>${registro.usuario_nome}</td>
+                if (data.piores_tma.length === 0) {
+                    pioresTMA.innerHTML = `
+                        <div class="meta-info">
+                            <small>🎯 Meta TMA: ${metaTMA} segundos</small>
+                        </div>
+                        <div class="sem-dados">
+                            <p>🎉 Excelente! Nenhum tempo TMA está acima da meta!</p>
+                            <p>Todos os operadores estão dentro da meta de ${metaTMA} segundos.</p>
+                        </div>
+                    `;
+                } else {
+                    pioresTMA.innerHTML = `
+                        <div class="meta-info">
+                            <small>🎯 Meta TMA: ${metaTMA} segundos (apenas tempos acima da meta)</small>
+                        </div>
+                        <table class="top-table">
+                            <thead>
+                                <tr>
+                                    <th>Pos.</th>
+                                    <th>Operador</th>
+                                    <th>PDV</th>
+                                    <th>TMA</th>
+                                    <th>Data</th>
+                                    <th>Usuário</th>
                                 </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
+                            </thead>
+                            <tbody>
+                                ${data.piores_tma.map((registro, index) => `
+                                    <tr class="top-pior">
+                                        <td class="pos-numero">${index + 1}°</td>
+                                        <td>${registro.nome_operador}</td>
+                                        <td>PDV ${registro.numero_pdv}</td>
+                                        <td class="tempo-destaque tempo-fora-meta">${registro.tma}s</td>
+                                        <td>${registro.data_registro}</td>
+                                        <td>${registro.usuario_nome}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
                 
                 // Melhores TMR
                 const melhoresTMR = document.getElementById('melhoresTMR');
                 melhoresTMR.innerHTML = `
+                    <div class="meta-info">
+                        <small>🎯 Meta TMR: ${metaTMR} segundos</small>
+                    </div>
                     <table class="top-table">
                         <thead>
                             <tr>
@@ -667,7 +757,7 @@
                                     <td class="pos-numero">${index + 1}°</td>
                                     <td>${registro.nome_operador}</td>
                                     <td>PDV ${registro.numero_pdv}</td>
-                                    <td class="tempo-destaque">${registro.tmr} seg/item</td>
+                                    <td class="tempo-destaque ${registro.dentro_meta ? 'tempo-meta' : ''}">${registro.tmr}s</td>
                                     <td>${registro.data_registro}</td>
                                     <td>${registro.usuario_nome}</td>
                                 </tr>
@@ -676,38 +766,228 @@
                     </table>
                 `;
                 
-                // Piores TMR
+                // Piores TMR (apenas tempos acima da meta)
                 const pioresTMR = document.getElementById('pioresTMR');
-                pioresTMR.innerHTML = `
-                    <table class="top-table">
-                        <thead>
-                            <tr>
-                                <th>Pos.</th>
-                                <th>Operador</th>
-                                <th>PDV</th>
-                                <th>TMR</th>
-                                <th>Data</th>
-                                <th>Usuário</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.piores_tmr.map((registro, index) => `
-                                <tr class="top-pior">
-                                    <td class="pos-numero">${index + 1}°</td>
-                                    <td>${registro.nome_operador}</td>
-                                    <td>PDV ${registro.numero_pdv}</td>
-                                    <td class="tempo-destaque">${registro.tmr} seg/item</td>
-                                    <td>${registro.data_registro}</td>
-                                    <td>${registro.usuario_nome}</td>
+                if (data.piores_tmr.length === 0) {
+                    pioresTMR.innerHTML = `
+                        <div class="meta-info">
+                            <small>🎯 Meta TMR: ${metaTMR} segundos</small>
+                        </div>
+                        <div class="sem-dados">
+                            <p>🎉 Excelente! Nenhum tempo TMR está acima da meta!</p>
+                            <p>Todos os operadores estão dentro da meta de ${metaTMR} segundos.</p>
+                        </div>
+                    `;
+                } else {
+                    pioresTMR.innerHTML = `
+                        <div class="meta-info">
+                            <small>🎯 Meta TMR: ${metaTMR} segundos (apenas tempos acima da meta)</small>
+                        </div>
+                        <table class="top-table">
+                            <thead>
+                                <tr>
+                                    <th>Pos.</th>
+                                    <th>Operador</th>
+                                    <th>PDV</th>
+                                    <th>TMR</th>
+                                    <th>Data</th>
+                                    <th>Usuário</th>
                                 </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
+                            </thead>
+                            <tbody>
+                                ${data.piores_tmr.map((registro, index) => `
+                                    <tr class="top-pior">
+                                        <td class="pos-numero">${index + 1}°</td>
+                                        <td>${registro.nome_operador}</td>
+                                        <td>PDV ${registro.numero_pdv}</td>
+                                        <td class="tempo-destaque tempo-fora-meta">${registro.tmr}s</td>
+                                        <td>${registro.data_registro}</td>
+                                        <td>${registro.usuario_nome}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
                 
             } catch (error) {
                 console.error('Erro ao carregar Top 10:', error);
                 document.querySelectorAll('#top-tempos .loading').forEach(el => {
+                    el.innerHTML = '<div class="error">Erro ao carregar dados: ' + error.message + '</div>';
+                });
+            }
+        }
+
+        // Carregar Top 10 de melhores e piores tempos DIÁRIOS
+        async function carregarTopTemposDiario() {
+            try {
+                const response = await fetch('/api/admin/top-tempos-diario');
+                const data = await response.json();
+                
+                if (data.erro) {
+                    throw new Error(data.erro);
+                }
+                
+                const metaTMA = data.meta_tma;
+                const metaTMR = data.meta_tmr;
+                
+                // Atualizar informações do dia
+                document.getElementById('data-hoje').textContent = data.data_consulta;
+                document.getElementById('total-hoje').textContent = data.total_registros_hoje;
+                
+                // Melhores TMA Hoje
+                const melhoresTMAHoje = document.getElementById('melhoresTMAHoje');
+                melhoresTMAHoje.innerHTML = `
+                    <div class="meta-info">
+                        <small>🎯 Meta TMA: ${metaTMA} segundos</small>
+                    </div>
+                    ${data.melhores_tma_hoje.length === 0 ? 
+                        '<div class="sem-dados"><p>📭 Nenhum registro TMA encontrado para hoje</p></div>' :
+                        `<table class="top-table">
+                            <thead>
+                                <tr>
+                                    <th>Pos.</th>
+                                    <th>Operador</th>
+                                    <th>PDV</th>
+                                    <th>TMA</th>
+                                    <th>Usuário</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.melhores_tma_hoje.map((registro, index) => `
+                                    <tr class="top-melhor">
+                                        <td class="pos-numero">${index + 1}°</td>
+                                        <td>${registro.nome_operador}</td>
+                                        <td>PDV ${registro.numero_pdv}</td>
+                                        <td class="tempo-destaque ${registro.dentro_meta ? 'tempo-meta' : ''}">${registro.tma}s</td>
+                                        <td>${registro.usuario_nome}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>`
+                    }
+                `;
+                
+                // Piores TMA Hoje (apenas acima da meta)
+                const pioresTMAHoje = document.getElementById('pioresTMAHoje');
+                if (data.piores_tma_hoje.length === 0) {
+                    pioresTMAHoje.innerHTML = `
+                        <div class="meta-info">
+                            <small>🎯 Meta TMA: ${metaTMA} segundos</small>
+                        </div>
+                        <div class="sem-dados">
+                            <p>🎉 Excelente! Nenhum tempo TMA está acima da meta hoje!</p>
+                            <p>Todos os operadores de hoje estão dentro da meta de ${metaTMA} segundos.</p>
+                        </div>
+                    `;
+                } else {
+                    pioresTMAHoje.innerHTML = `
+                        <div class="meta-info">
+                            <small>🎯 Meta TMA: ${metaTMA} segundos (apenas tempos acima da meta)</small>
+                        </div>
+                        <table class="top-table">
+                            <thead>
+                                <tr>
+                                    <th>Pos.</th>
+                                    <th>Operador</th>
+                                    <th>PDV</th>
+                                    <th>TMA</th>
+                                    <th>Usuário</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.piores_tma_hoje.map((registro, index) => `
+                                    <tr class="top-pior">
+                                        <td class="pos-numero">${index + 1}°</td>
+                                        <td>${registro.nome_operador}</td>
+                                        <td>PDV ${registro.numero_pdv}</td>
+                                        <td class="tempo-destaque tempo-fora-meta">${registro.tma}s</td>
+                                        <td>${registro.usuario_nome}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+                
+                // Melhores TMR Hoje
+                const melhoresTMRHoje = document.getElementById('melhoresTMRHoje');
+                melhoresTMRHoje.innerHTML = `
+                    <div class="meta-info">
+                        <small>🎯 Meta TMR: ${metaTMR} segundos</small>
+                    </div>
+                    ${data.melhores_tmr_hoje.length === 0 ? 
+                        '<div class="sem-dados"><p>📭 Nenhum registro TMR encontrado para hoje</p></div>' :
+                        `<table class="top-table">
+                            <thead>
+                                <tr>
+                                    <th>Pos.</th>
+                                    <th>Operador</th>
+                                    <th>PDV</th>
+                                    <th>TMR</th>
+                                    <th>Usuário</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.melhores_tmr_hoje.map((registro, index) => `
+                                    <tr class="top-melhor">
+                                        <td class="pos-numero">${index + 1}°</td>
+                                        <td>${registro.nome_operador}</td>
+                                        <td>PDV ${registro.numero_pdv}</td>
+                                        <td class="tempo-destaque ${registro.dentro_meta ? 'tempo-meta' : ''}">${registro.tmr}s</td>
+                                        <td>${registro.usuario_nome}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>`
+                    }
+                `;
+                
+                // Piores TMR Hoje (apenas acima da meta)
+                const pioresTMRHoje = document.getElementById('pioresTMRHoje');
+                if (data.piores_tmr_hoje.length === 0) {
+                    pioresTMRHoje.innerHTML = `
+                        <div class="meta-info">
+                            <small>🎯 Meta TMR: ${metaTMR} segundos</small>
+                        </div>
+                        <div class="sem-dados">
+                            <p>🎉 Excelente! Nenhum tempo TMR está acima da meta hoje!</p>
+                            <p>Todos os operadores de hoje estão dentro da meta de ${metaTMR} segundos.</p>
+                        </div>
+                    `;
+                } else {
+                    pioresTMRHoje.innerHTML = `
+                        <div class="meta-info">
+                            <small>🎯 Meta TMR: ${metaTMR} segundos (apenas tempos acima da meta)</small>
+                        </div>
+                        <table class="top-table">
+                            <thead>
+                                <tr>
+                                    <th>Pos.</th>
+                                    <th>Operador</th>
+                                    <th>PDV</th>
+                                    <th>TMR</th>
+                                    <th>Usuário</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.piores_tmr_hoje.map((registro, index) => `
+                                    <tr class="top-pior">
+                                        <td class="pos-numero">${index + 1}°</td>
+                                        <td>${registro.nome_operador}</td>
+                                        <td>PDV ${registro.numero_pdv}</td>
+                                        <td class="tempo-destaque tempo-fora-meta">${registro.tmr}s</td>
+                                        <td>${registro.usuario_nome}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar Top 10 diário:', error);
+                document.querySelectorAll('#top-diario .loading').forEach(el => {
                     el.innerHTML = '<div class="error">Erro ao carregar dados: ' + error.message + '</div>';
                 });
             }
