@@ -26,22 +26,39 @@ CORS(app, resources={
 })
 
 # Configuração do banco de dados
+# Prioridade absoluta para Railway DATABASE_URL
 database_url = os.environ.get('DATABASE_URL')
 
-# Configuração para PostgreSQL local (pgAdmin)
-if not database_url:
-    # Configurações para PostgreSQL local - ajuste conforme sua configuração no pgAdmin
+if database_url:
+    # Railway/Produção - usar DATABASE_URL fornecida
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print(f"🚂 Railway PostgreSQL detectado e configurado!")
+    print(f"📊 Banco de dados: PostgreSQL (produção)")
+    
+elif os.environ.get('RAILWAY_ENVIRONMENT'):
+    # Se estamos no Railway mas DATABASE_URL não existe (erro de configuração)
+    print("❌ ERRO: Railway detectado mas DATABASE_URL não encontrada!")
+    print("🔧 Solução: Adicione PostgreSQL ao projeto Railway")
+    raise Exception("DATABASE_URL obrigatória no Railway")
+    
+else:
+    # Desenvolvimento local - tentar PostgreSQL local ou SQLite fallback
+    print("🏠 Ambiente de desenvolvimento local detectado")
+    
+    # Configurações para PostgreSQL local (desenvolvimento)
     pg_host = os.environ.get('POSTGRES_HOST', 'localhost')
     pg_port = os.environ.get('POSTGRES_PORT', '5432')
     pg_db = os.environ.get('POSTGRES_DB', 'tma_tmr_db')
     pg_user = os.environ.get('POSTGRES_USER', 'postgres')
     pg_password = os.environ.get('POSTGRES_PASSWORD', '')
     
-    # Tentar PostgreSQL primeiro
-    if pg_password:  # Só tentar se tiver senha configurada
+    # Tentar PostgreSQL local primeiro
+    if pg_password:
         try:
             database_url = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
-            print(f"📊 Tentando PostgreSQL: {pg_host}:{pg_port}/{pg_db}")
+            print(f"📊 Testando PostgreSQL local: {pg_host}:{pg_port}/{pg_db}")
             
             # Teste rápido de conexão
             import psycopg2
@@ -50,33 +67,22 @@ if not database_url:
                 user=pg_user, password=pg_password
             )
             test_conn.close()
-            print(f"✅ PostgreSQL conectado com sucesso!")
+            app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+            print(f"✅ PostgreSQL local conectado com sucesso!")
             
         except ImportError:
             print("⚠️ psycopg2 não instalado. Execute: pip install psycopg2-binary")
-            database_url = None
+            print("🔄 Usando SQLite como fallback...")
+            app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/dados.db'
+            
         except Exception as e:
-            print(f"⚠️ Erro ao conectar PostgreSQL: {e}")
-            print(f"🔄 Alternativas:")
-            print(f"   1. Verifique se PostgreSQL está rodando")
-            print(f"   2. Confirme as credenciais no arquivo .env")
-            print(f"   3. Teste a conexão no pgAdmin primeiro")
-            database_url = None
+            print(f"⚠️ PostgreSQL local falhou: {e}")
+            print("🔄 Usando SQLite como fallback...")
+            app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/dados.db'
     else:
-        print("⚠️ Senha do PostgreSQL não configurada no .env")
-        database_url = None
-
-if database_url:
-    # Para deploy (Railway/Render) - ajustar PostgreSQL URL se necessário
-    if database_url.startswith('postgres://'):
-        database_url = database_url.replace('postgres://', 'postgresql://', 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    print(f"📊 Banco de dados configurado: PostgreSQL")
-else:
-    # Fallback para SQLite se não conseguir configurar PostgreSQL
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/dados.db'
-    print(f"📊 Fallback: Usando SQLite local (dados em instance/dados.db)")
-    print(f"💡 Para usar PostgreSQL, configure o arquivo .env corretamente")
+        print("⚠️ PostgreSQL local não configurado (sem senha)")
+        print("🔄 Usando SQLite como fallback...")
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/dados.db'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'supersegredo')
@@ -882,20 +888,37 @@ def deletar_registro_admin(registro_id):
 def health_check():
     """Endpoint de healthcheck para Railway"""
     try:
-        # Testar conexão com banco de dados
-        with app.app_context():
-            db.session.execute(db.text("SELECT 1"))
-        
-        return jsonify({
+        # Informações básicas sempre disponíveis
+        response_data = {
             "status": "healthy",
             "service": "TMA/TMR System",
             "timestamp": datetime.now().isoformat(),
-            "database": "connected"
-        }), 200
+            "environment": "railway" if os.environ.get('RAILWAY_ENVIRONMENT') else "local"
+        }
+        
+        # Testar conexão com banco de dados apenas se configurado
+        try:
+            with app.app_context():
+                # Teste simples de query
+                db.session.execute(db.text("SELECT 1"))
+                response_data["database"] = "connected"
+                response_data["database_type"] = "postgresql" if "postgresql" in app.config['SQLALCHEMY_DATABASE_URI'] else "sqlite"
+        except Exception as db_error:
+            # Se banco falhar, ainda retorna healthy mas com aviso
+            response_data["database"] = "disconnected"
+            response_data["database_error"] = str(db_error)[:100]  # Limitar tamanho do erro
+            
+            # No Railway, erro de banco é crítico
+            if os.environ.get('RAILWAY_ENVIRONMENT'):
+                response_data["status"] = "unhealthy"
+                return jsonify(response_data), 500
+        
+        return jsonify(response_data), 200
+        
     except Exception as e:
         return jsonify({
             "status": "unhealthy",
-            "error": str(e),
+            "error": str(e)[:200],  # Limitar tamanho
             "timestamp": datetime.now().isoformat()
         }), 500
 
@@ -907,17 +930,38 @@ def debug_info():
         # Só permite debug em ambiente não-produção
         try:
             import platform
-            return jsonify({
+            
+            # Informações de ambiente
+            env_info = {
                 "python_version": platform.python_version(),
                 "flask_version": Flask.__version__,
-                "database_url": "configured" if os.environ.get('DATABASE_URL') else "not_configured",
-                "railway_env": os.environ.get('RAILWAY_ENVIRONMENT', 'not_set'),
-                "port": os.environ.get('PORT', '5000'),
-                "secret_key": "configured" if app.config.get('SECRET_KEY') else "not_configured",
-                "tables": [table.name for table in db.metadata.tables.values()],
-                "total_users": User.query.count(),
-                "total_registros": Registro.query.count()
-            })
+                "environment_vars": {
+                    "DATABASE_URL": "SET" if os.environ.get('DATABASE_URL') else "NOT_SET",
+                    "RAILWAY_ENVIRONMENT": os.environ.get('RAILWAY_ENVIRONMENT', 'NOT_SET'),
+                    "PORT": os.environ.get('PORT', 'NOT_SET'),
+                    "POSTGRES_HOST": os.environ.get('POSTGRES_HOST', 'NOT_SET'),
+                    "POSTGRES_PASSWORD": "SET" if os.environ.get('POSTGRES_PASSWORD') else "NOT_SET"
+                },
+                "database_config": {
+                    "sqlalchemy_uri": app.config.get('SQLALCHEMY_DATABASE_URI', 'NOT_CONFIGURED')[:50] + "...",
+                    "uri_type": "postgresql" if "postgresql" in str(app.config.get('SQLALCHEMY_DATABASE_URI', '')) else "sqlite"
+                }
+            }
+            
+            # Testar conexão com banco
+            try:
+                with app.app_context():
+                    db.session.execute(db.text("SELECT 1"))
+                    env_info["database_connection"] = "SUCCESS"
+                    env_info["tables"] = [table.name for table in db.metadata.tables.values()]
+                    env_info["total_users"] = User.query.count()
+                    env_info["total_registros"] = Registro.query.count()
+            except Exception as db_error:
+                env_info["database_connection"] = "FAILED"
+                env_info["database_error"] = str(db_error)
+            
+            return jsonify(env_info)
+            
         except Exception as e:
             return jsonify({"debug_error": str(e)}), 500
     else:

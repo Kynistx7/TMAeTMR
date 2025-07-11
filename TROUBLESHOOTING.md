@@ -2,8 +2,43 @@
 
 ## ❌ ERRO: "Healthcheck failed!"
 
-### 🔍 CAUSA MAIS COMUM
-O Railway não consegue acessar a rota de healthcheck `/health` ou ela está retornando erro.
+### 🔍 ERRO ESPECÍFICO: Connection to localhost refused
+```json
+{
+  "error": "(psycopg2.OperationalError) connection to server at \"localhost\"",
+  "status": "unhealthy"
+}
+```
+
+**PROBLEMA**: A aplicação está tentando conectar ao PostgreSQL **local** em vez do PostgreSQL do **Railway**.
+
+### ✅ CAUSA RAIZ
+- ❌ `DATABASE_URL` do Railway não está sendo detectada
+- ❌ Aplicação está usando configurações de desenvolvimento local
+- ❌ PostgreSQL do Railway pode não estar conectado ao projeto
+
+### 🚨 SOLUÇÕES URGENTES
+
+#### 1. **Verificar PostgreSQL no Railway**
+1. **Acesse Railway Dashboard**
+2. **Vá no seu projeto**
+3. **Verifique se tem um serviço PostgreSQL**
+4. **Se NÃO tem**:
+   - Clique em **"+ New"**
+   - Selecione **"Database" → "PostgreSQL"**
+   - Aguarde criação (2-3 minutos)
+
+#### 2. **Verificar Variáveis de Ambiente**
+1. **No Railway**, clique no **serviço da aplicação** (não no banco)
+2. **Vá na aba "Variables"**
+3. **Deve ter**: `DATABASE_URL` (criada automaticamente)
+4. **Se não tem**: O PostgreSQL não está conectado
+
+#### 3. **Reconectar PostgreSQL ao Projeto**
+Se `DATABASE_URL` não existe:
+1. **Delete o serviço PostgreSQL** atual
+2. **Crie um novo**: + New → Database → PostgreSQL
+3. **Railway conectará automaticamente**
 
 ### ✅ SOLUÇÕES IMPLEMENTADAS
 
@@ -36,6 +71,41 @@ gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 app:app
 - ✅ Servidor WSGI robusto
 - ✅ 2 workers para performance
 - ✅ Timeout de 120s por request
+
+## 🔧 CORREÇÃO IMPLEMENTADA NO CÓDIGO
+
+### ✅ **Nova Lógica de Banco de Dados**
+```python
+# Prioridade absoluta para Railway DATABASE_URL
+database_url = os.environ.get('DATABASE_URL')
+
+if database_url:
+    # Railway/Produção - usar DATABASE_URL
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print("🚂 Railway PostgreSQL detectado!")
+    
+elif os.environ.get('RAILWAY_ENVIRONMENT'):
+    # Railway sem DATABASE_URL = ERRO
+    raise Exception("DATABASE_URL obrigatória no Railway")
+```
+
+### ✅ **Healthcheck Mais Robusto**
+```python
+@app.route("/health")
+def health_check():
+    # Testa banco apenas se configurado
+    # Em caso de erro, mostra detalhes
+    # No Railway, erro de banco = unhealthy
+```
+### ✅ **Debug Melhorado**
+```
+GET /debug (só em desenvolvimento)
+```
+Mostra:
+- ✅ Status de `DATABASE_URL`
+- ✅ Configuração atual do banco
+- ✅ Resultado de conexão
+- ✅ Variáveis de ambiente
 
 ## 🛠️ PASSOS PARA RESOLVER
 
