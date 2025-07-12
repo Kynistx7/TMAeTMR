@@ -31,7 +31,11 @@ database_url = os.environ.get('DATABASE_URL')
 
 print(f"🔍 DEBUG - DATABASE_URL: {database_url[:50] if database_url else 'NÃO ENCONTRADA'}")
 print(f"🔍 DEBUG - RAILWAY_ENVIRONMENT: {os.environ.get('RAILWAY_ENVIRONMENT')}")
-print(f"🔍 DEBUG - Variáveis de ambiente disponíveis: {list(os.environ.keys())}")
+print(f"🔍 DEBUG - SECRET_KEY existe: {bool(os.environ.get('SECRET_KEY'))}")
+
+# Listar as variáveis que começam com DATABASE ou POSTGRES
+env_vars = [k for k in os.environ.keys() if k.startswith(('DATABASE', 'POSTGRES', 'RAILWAY'))]
+print(f"🔍 DEBUG - Variáveis relacionadas: {env_vars}")
 
 if database_url:
     # Railway/Produção - usar DATABASE_URL fornecida
@@ -1060,7 +1064,11 @@ def init_database_tables():
 # SEMPRE inicializar no Railway
 if os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('DATABASE_URL'):
     print("🚂 Ambiente Railway detectado - inicializando...")
-    init_database_tables()
+    try:
+        init_database_tables()
+    except Exception as e:
+        print(f"⚠️ Erro na inicialização, mas continuando: {e}")
+        # Não falhar o app por causa de erro de banco
 
 if __name__ == "__main__":
     print("🚀 Iniciando Sistema TMA/TMR...")
