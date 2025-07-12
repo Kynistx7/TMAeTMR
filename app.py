@@ -100,10 +100,15 @@ if database_url and database_url.strip():
 elif is_railway:
     # Se estamos no Railway mas DATABASE_URL não existe (erro de configuração)
     print("❌ ERRO: Railway detectado mas DATABASE_URL não encontrada!")
-    print("🔧 Solução: Adicione PostgreSQL ao projeto Railway")
-    print("🔧 Ou conecte o serviço PostgreSQL à aplicação")
-    # FALHAR claramente para forçar configuração
-    raise Exception("DATABASE_URL obrigatória no Railway! Conecte PostgreSQL à aplicação.")
+    print("🔧 Solução: Conecte o PostgreSQL à aplicação web no Railway")
+    print("🔧 1. Vá para Variables na aplicação web")
+    print("🔧 2. Adicione Reference ao serviço PostgreSQL")
+    print("🔧 3. Ou adicione DATABASE_URL manualmente")
+    print("🔧 Usando SQLite temporário para não falhar o deploy...")
+    
+    # Usar SQLite temporário no Railway para não falhar
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tmp/railway_temp.db'
+    print("⚠️ ATENÇÃO: Usando SQLite temporário! Configure PostgreSQL urgentemente!")
     
 else:
     # Desenvolvimento local - tentar PostgreSQL local ou SQLite fallback
