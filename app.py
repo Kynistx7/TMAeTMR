@@ -628,7 +628,7 @@ def admin_chart_data():
         end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
         
         # Metas
-        META_TMA = 92.0
+        META_TMA = 1.32
         META_TMR = 6.0
         
         # 1. TMA e TMR médios por dia
@@ -847,9 +847,9 @@ def admin_top_tempos():
     try:
         from sqlalchemy import func
         
-        # Metas configuráveis (em segundos)
-        META_TMA = 92.0   # 1:32 (1 minuto e 32 segundos)
-        META_TMR = 6.0    # 6 segundos
+        # Metas configuráveis (em minutos decimais)
+        META_TMA = 1.32   # 1,32 minutos = 79.2 segundos
+        META_TMR = 6.0    # 6 segundos (TMR continua em segundos)
         
         # Top 10 melhores TMA (apenas tempos DENTRO da meta)
         melhores_tma = db.session.query(
@@ -868,6 +868,18 @@ def admin_top_tempos():
             Registro.data_registro,
             User.nome.label('usuario_nome')
         ).join(User).filter(Registro.tma > META_TMA).order_by(Registro.tma.desc()).limit(10).all()
+        
+        # Adicionar status "FORA DA META" para piores TMA
+        piores_tma_com_status = []
+        for r in piores_tma:
+            piores_tma_com_status.append({
+                "nome_operador": r.nome_operador,
+                "numero_pdv": r.numero_pdv,
+                "tma": round(float(r.tma), 2),
+                "data_registro": r.data_registro.strftime('%Y-%m-%d'),
+                "usuario_nome": r.usuario_nome,
+                "status": "FORA DA META"
+            })
         
         # Top 10 melhores TMR (apenas tempos DENTRO da meta)
         melhores_tmr = db.session.query(
@@ -946,7 +958,7 @@ def admin_top_tempos_diario():
         else:
             data_filtro = date.today()
         
-        META_TMA = 92.0
+        META_TMA = 1.32
         META_TMR = 6.0
         
         # Contar registros da data
@@ -1034,6 +1046,53 @@ def admin_top_tempos_diario():
         
     except Exception as e:
         print(f"❌ Erro ao buscar top tempos diário: {e}")
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/admin/check-tma-meta")
+def check_tma_meta():
+    """Verifica se TMA está dentro ou fora da meta de 1:19 (79.2s)"""
+    if not verificar_admin():
+        return jsonify({"erro": "Acesso negado"}), 403
+    
+    try:
+        # Meta TMA: 1,32 minutos = 79.2 segundos
+        META_TMA = 1.32
+        
+        # Buscar todos os registros
+        registros = Registro.query.all()
+        
+        dentro_meta = []
+        fora_meta = []
+        
+        for r in registros:
+            registro_info = {
+                "nome_operador": r.nome_operador,
+                "numero_pdv": r.numero_pdv,
+                "tma": r.tma,
+                "data_registro": r.data_registro.strftime('%Y-%m-%d'),
+                "status": "DENTRO DA META" if r.tma <= META_TMA else "FORA DA META"
+            }
+            
+            if r.tma <= META_TMA:
+                dentro_meta.append(registro_info)
+            else:
+                fora_meta.append(registro_info)
+        
+        return jsonify({
+            "meta_tma": "1:19 (79.2 segundos)",
+            "total_registros": len(registros),
+            "dentro_meta": {
+                "quantidade": len(dentro_meta),
+                "registros": dentro_meta
+            },
+            "fora_meta": {
+                "quantidade": len(fora_meta),
+                "registros": fora_meta
+            }
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro ao verificar meta TMA: {e}")
         return jsonify({"erro": str(e)}), 500
 
 # Rota específica para healthcheck do Railway
@@ -1170,14 +1229,15 @@ if __name__ == "__main__":
             print(f"🌐 Servidor local rodando em http://localhost:{port}")
             print("📱 Acesse /login para usar a aplicação")
         
-        # Configurações otimizadas para produção
-        debug_mode = not (is_railway or is_production)
+        # Configurações para desenvolvimento (debug sempre ativo localmente)
+        debug_mode = True  # Forçar debug mode para desenvolvimento local
         
         app.run(
             host='0.0.0.0', 
             port=port, 
             debug=debug_mode,
-            threaded=True
+            threaded=True,
+            use_reloader=True  # Auto-reload quando arquivos mudarem
         )
         
     except Exception as e:

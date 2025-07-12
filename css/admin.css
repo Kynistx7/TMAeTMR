@@ -1,5 +1,5 @@
 /* ===== ADMIN CSS - MODERNO BASEADO EM TEMP.CSS ===== */
-/* Versão 3.0 - Estilo melhorado com gradientes e animações */
+/* Versão 3.1 - Interface moderna com listas organizadas */
 
 /* Importar fonte Google Fonts moderna */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -506,6 +506,89 @@ body.admin-page::before {
     100% { transform: rotate(360deg); }
 }
 
+/* Loading states melhorados */
+.admin-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    margin: 15px 0;
+    color: #6366f1;
+    font-weight: 500;
+    position: relative;
+}
+
+.admin-loading::before {
+    content: '';
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(99, 102, 241, 0.2);
+    border-top: 3px solid #6366f1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 12px;
+}
+
+/* Melhorias nos cards de ranking */
+.ranking-card {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.ranking-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    transition: left 0.6s ease;
+}
+
+.ranking-card:hover::before {
+    left: 100%;
+}
+
+.ranking-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Efeito hover nas linhas da tabela */
+.ranking-data-row {
+    cursor: pointer;
+}
+
+.ranking-data-row:hover {
+    background: linear-gradient(
+        90deg,
+        rgba(99, 102, 241, 0.05),
+        rgba(99, 102, 241, 0.02),
+        rgba(99, 102, 241, 0.05)
+    );
+}
+
+/* Animações de entrada escalonadas */
+.ranking-data-row:nth-child(2) { animation-delay: 0.1s; }
+.ranking-data-row:nth-child(3) { animation-delay: 0.15s; }
+.ranking-data-row:nth-child(4) { animation-delay: 0.2s; }
+.ranking-data-row:nth-child(5) { animation-delay: 0.25s; }
+.ranking-data-row:nth-child(6) { animation-delay: 0.3s; }
+.ranking-data-row:nth-child(7) { animation-delay: 0.35s; }
+.ranking-data-row:nth-child(8) { animation-delay: 0.4s; }
+.ranking-data-row:nth-child(9) { animation-delay: 0.45s; }
+.ranking-data-row:nth-child(10) { animation-delay: 0.5s; }
+.ranking-data-row:nth-child(11) { animation-delay: 0.55s; }
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .admin-header {
@@ -795,10 +878,27 @@ body.admin-page::before {
 
 /* Loading State */
 .admin-loading {
-    text-align: center;
-    padding: 40px 20px;
-    color: #6b7280;
-    font-style: italic;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    margin: 15px 0;
+    color: #6366f1;
+    font-weight: 500;
+    position: relative;
+}
+
+.admin-loading::before {
+    content: '';
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(99, 102, 241, 0.2);
+    border-top: 3px solid #6366f1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 12px;
 }
 
 /* Error State */
@@ -1119,62 +1219,29 @@ body.admin-page::before {
 .ranking-details {
     flex: 1;
     padding-left: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.ranking-operador {
-    font-weight: 700;
-    font-size: 1rem;
-    color: #1f2937;
-    margin-bottom: 4px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.ranking-info {
+.ranking-meta {
+    font-size: 0.85rem;
     color: #6b7280;
+    font-weight: 500;
+}
+
+.operador-name {
     font-weight: 600;
-    margin-bottom: 3px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.9rem;
+    color: #1f2937;
+    font-size: 1rem;
 }
 
-.ranking-info::before {
-    content: '📊';
-    font-size: 0.8rem;
-}
-
-.ranking-date {
-    color: #9ca3af;
-    font-size: 0.85rem;
-    margin-bottom: 3px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.ranking-date::before {
-    content: '📅';
-    font-size: 0.75rem;
-}
-
-.ranking-user {
-    color: #6366f1;
-    font-size: 0.85rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    background: rgba(99, 102, 241, 0.1);
-    padding: 3px 6px;
-    border-radius: 12px;
-    width: fit-content;
-    transition: all 0.3s ease;
-}
-
-.ranking-user:hover {
-    background: rgba(99, 102, 241, 0.2);
-    transform: scale(1.03);
+.tempo-value {
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+    display: inline-block;
 }
 
 /* Status Messages */
@@ -1366,4 +1433,347 @@ body.admin-page::before {
     font-size: 1.1rem;
     font-weight: 600;
     color: #6366f1;
+}
+
+/* ===== MODERN RANKING TABLE STYLES - FORMATO LISTA ===== */
+
+.modern-ranking-table {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    border: 1px solid rgba(229, 231, 235, 0.6);
+}
+
+.ranking-header-row {
+    display: none; /* Esconder cabeçalho para formato lista */
+}
+
+.ranking-data-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background: rgba(248, 250, 252, 0.9);
+    border: 1px solid rgba(229, 231, 235, 0.5);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+}
+
+.ranking-data-row:hover {
+    background: rgba(99, 102, 241, 0.05);
+    border-color: rgba(99, 102, 241, 0.3);
+    transform: translateX(3px);
+}
+
+/* Posição */
+.col-pos {
+    justify-content: center !important;
+}
+
+.position-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+.operador-name {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 1rem;
+}
+
+.tempo-value {
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+    display: inline-block;
+}
+
+.data-value {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Estados especiais */
+.excellent-ranking,
+.empty-ranking {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6b7280;
+    font-style: italic;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    margin: 15px 0;
+}
+
+.excellent-ranking {
+    color: #059669;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+/* Animações */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modern-ranking-table {
+    animation: slideInUp 0.4s ease-out;
+}
+
+.ranking-data-row {
+    animation: slideInUp 0.3s ease-out;
+}
+
+.ranking-data-row:nth-child(even) {
+    animation-delay: 0.05s;
+}
+
+.ranking-data-row:nth-child(odd) {
+    animation-delay: 0.1s;
+}
+
+/* Status badges */
+.status-badge {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 18px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.status-badge.good {
+    background: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.bad {
+    background: #ef4444;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+/* Espaçamento entre seções */
+.tab-content .ranking-section {
+    margin-bottom: 25px;
+}
+
+.tab-content .ranking-section:last-child {
+    margin-bottom: 15px;
+}
+
+.tab-content h3 {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid rgba(99, 102, 241, 0.2);
+}
+
+/* ===== ESTILOS PARA ABA DE USUÁRIOS - VERSÃO ATUALIZADA ===== */
+
+/* Lista vertical de usuários */
+.usuarios-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.usuario-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background: rgba(248, 250, 252, 0.9);
+    border: 1px solid rgba(229, 231, 235, 0.5);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    margin-bottom: 8px;
+}
+
+.usuario-item:hover {
+    background: rgba(99, 102, 241, 0.05);
+    border-color: rgba(99, 102, 241, 0.3);
+    transform: translateX(3px);
+}
+
+.usuario-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.usuario-avatar {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+}
+
+.usuario-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.usuario-nome {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 0.95rem;
+}
+
+.usuario-stats {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.usuario-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.usuario-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.usuario-badge.admin {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.usuario-badge.operador {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+/* Lista de usuários responsiva */
+@media (max-width: 768px) {
+    .usuarios-list {
+        padding: 15px;
+        gap: 8px;
+    }
+    
+    .usuario-item {
+        padding: 10px 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .usuario-info {
+        width: 100%;
+    }
+    
+    .usuario-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+/* Novos estilos para lista de rankings */
+.ranking-info-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.ranking-info-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.ranking-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ranking-meta {
+    font-size: 0.85rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.position-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+.operador-name {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 1rem;
+}
+
+.tempo-value {
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+    display: inline-block;
+}
+
+.data-value {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
 }

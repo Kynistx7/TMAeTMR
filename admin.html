@@ -54,8 +54,8 @@
             <h2>🏆 Ranking de Tempos - Melhores e Piores</h2>
             <div class="ranking-info">
                 <p><strong>📏 Critérios:</strong></p>
-                <p>• <span class="meta-good">TMA ≤ 1:32 (92s)</span> e <span class="meta-good">TMR ≤ 6s</span> = Melhores Tempos</p>
-                <p>• <span class="meta-bad">TMA > 1:32 (92s)</span> e <span class="meta-bad">TMR > 6s</span> = Piores Tempos</p>
+                <p>• <span class="meta-good">TMA ≤ 1,32 min (79.2s)</span> e <span class="meta-good">TMR ≤ 6s</span> = Melhores Tempos</p>
+                <p>• <span class="meta-bad">TMA > 1,32 min (79.2s)</span> e <span class="meta-bad">TMR > 6s</span> = Piores Tempos</p>
             </div>
             
             <!-- Navigation Tabs -->
@@ -72,8 +72,8 @@
                     <!-- Melhores Tempos TMA -->
                     <div class="ranking-card good">
                         <div class="ranking-header">
-                            <h4>🎯 Melhores TMA (≤ 1:32)</h4>
-                            <span class="meta-badge good">Meta: 92s</span>
+                            <h4>🎯 Melhores TMA (≤ 1,32)</h4>
+                            <span class="meta-badge good">Meta: 1.32 min</span>
                         </div>
                         <div id="melhoresTMAGeral" class="ranking-content">Carregando...</div>
                     </div>
@@ -81,8 +81,8 @@
                     <!-- Piores Tempos TMA -->
                     <div class="ranking-card bad">
                         <div class="ranking-header">
-                            <h4>⚠️ Piores TMA (> 1:32)</h4>
-                            <span class="meta-badge bad">Acima de 92s</span>
+                            <h4>⚠️ Piores TMA (> 1,32)</h4>
+                            <span class="meta-badge bad">Acima de 1.32 min</span>
                         </div>
                         <div id="pioresTMAGeral" class="ranking-content">Carregando...</div>
                     </div>
@@ -127,8 +127,8 @@
                     <!-- Melhores Tempos TMA Hoje -->
                     <div class="ranking-card good">
                         <div class="ranking-header">
-                            <h4>🎯 Melhores TMA Hoje (≤ 1:32)</h4>
-                            <span class="meta-badge good">Meta: 92s</span>
+                            <h4>🎯 Melhores TMA Hoje (≤ 1,32)</h4>
+                            <span class="meta-badge good">Meta: 1.32 min</span>
                         </div>
                         <div id="melhoresTMAHoje" class="ranking-content">Carregando...</div>
                     </div>
@@ -136,8 +136,8 @@
                     <!-- Piores Tempos TMA Hoje -->
                     <div class="ranking-card bad">
                         <div class="ranking-header">
-                            <h4>⚠️ Piores TMA Hoje (> 1:32)</h4>
-                            <span class="meta-badge bad">Acima de 92s</span>
+                            <h4>⚠️ Piores TMA Hoje (> 1,32)</h4>
+                            <span class="meta-badge bad">Acima de 1.32 min</span>
                         </div>
                         <div id="pioresTMAHoje" class="ranking-content">Carregando...</div>
                     </div>
@@ -324,30 +324,40 @@
                 const container = document.getElementById('usuariosList');
                 container.innerHTML = '';
                 
+                if (data.usuarios.length === 0) {
+                    container.innerHTML = '<div class="admin-empty">Nenhum usuário encontrado.</div>';
+                    return;
+                }
+                
+                // Criar container da lista
+                const listContainer = document.createElement('div');
+                listContainer.className = 'usuarios-list';
+                
                 data.usuarios.forEach(usuario => {
-                    const userDiv = document.createElement('div');
-                    userDiv.style.cssText = `
-                        background: white;
-                        border-radius: 8px;
-                        padding: 20px;
-                        margin-bottom: 15px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    `;
-                    userDiv.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <strong style="font-size: 1.1rem; color: #1f2937;">${usuario.nome}</strong>
-                                ${usuario.is_admin ? '<span style="background: #6366f1; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; margin-left: 10px;">ADMIN</span>' : ''}
-                                <div style="color: #6b7280; margin-top: 5px;">${usuario.total_registros} registros</div>
-                            </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button onclick="viewUserRecords(${usuario.id}, '${usuario.nome}')" style="background: #4f46e5; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">📊 Ver Lançamentos</button>
-                                ${!usuario.is_admin ? `<button onclick="deleteUser(${usuario.id}, '${usuario.nome}')" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Deletar</button>` : ''}
+                    const userItem = document.createElement('div');
+                    userItem.className = 'usuario-item';
+                    
+                    const iniciais = usuario.nome.split(' ').map(n => n[0]).join('').substring(0, 2);
+                    
+                    userItem.innerHTML = `
+                        <div class="usuario-info">
+                            <div class="usuario-avatar">${iniciais}</div>
+                            <div class="usuario-details">
+                                <div class="usuario-nome">${usuario.nome}</div>
+                                <div class="usuario-stats">${usuario.total_registros} registros realizados</div>
                             </div>
                         </div>
+                        <div class="usuario-actions">
+                            ${usuario.is_admin ? '<span class="usuario-badge admin">Admin</span>' : '<span class="usuario-badge operador">Operador</span>'}
+                            <button onclick="viewUserRecords(${usuario.id}, '${usuario.nome}')" style="background: #4f46e5; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">📊 Ver</button>
+                            ${!usuario.is_admin ? `<button onclick="deleteUser(${usuario.id}, '${usuario.nome}')" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">🗑️</button>` : ''}
+                        </div>
                     `;
-                    container.appendChild(userDiv);
+                    
+                    listContainer.appendChild(userItem);
                 });
+                
+                container.appendChild(listContainer);
                 
             } catch (error) {
                 console.error('Erro ao carregar usuários:', error);
@@ -434,7 +444,7 @@
                 
                 registros.forEach((registro, index) => {
                     const dataHora = new Date(registro.data_registro).toLocaleDateString('pt-BR');
-                    const tmaClass = registro.tma <= 92 ? 'color: #059669; font-weight: bold;' : 'color: #dc2626;';
+                    const tmaClass = registro.tma <= 1.32 ? 'color: #059669; font-weight: bold;' : 'color: #dc2626;';
                     const tmrClass = registro.tmr <= 172 ? 'color: #059669; font-weight: bold;' : 'color: #dc2626;';
                     const bgColor = index % 2 === 0 ? '#f8fafc' : 'white';
                     
@@ -443,7 +453,7 @@
                             <td style="padding: 10px;">${dataHora}</td>
                             <td style="padding: 10px;">${registro.nome_operador}</td>
                             <td style="padding: 10px; text-align: center;">${registro.numero_pdv}</td>
-                            <td style="padding: 10px; text-align: center; ${tmaClass}">${registro.tma}s</td>
+                            <td style="padding: 10px; text-align: center; ${tmaClass}">${registro.tma} min</td>
                             <td style="padding: 10px; text-align: center; ${tmrClass}">${registro.tmr}s</td>
                             <td style="padding: 10px; text-align: center;">
                                 <button onclick="deleteRecord(${registro.id}, '${userName}', ${userId})" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">🗑️ Deletar</button>
@@ -525,17 +535,17 @@
 
                 console.log('🔍 DEBUG - Ranking Geral:', data);
                 
-                // Melhores TMA (≤92s)
+                // Melhores TMA (≤79.2s)
                 const melhoresTMAGeral = document.getElementById('melhoresTMAGeral');
                 if (data.melhores_tma.length === 0) {
-                    melhoresTMAGeral.innerHTML = '<div class="empty-ranking">📭 Nenhum TMA ≤ 1:32 encontrado</div>';
+                    melhoresTMAGeral.innerHTML = '<div class="empty-ranking">📭 Nenhum TMA ≤ 1,32 encontrado</div>';
                 } else {
                     melhoresTMAGeral.innerHTML = createRankingTable(
                         data.melhores_tma.map((r, i) => ({
                             pos: i + 1,
                             operador: r.nome_operador,
                             pdv: r.numero_pdv,
-                            tempo: `${r.tma}s`,
+                            tempo: `${r.tma} min`,
                             data: r.data_registro,
                             usuario: r.usuario_nome,
                             tipo: 'good'
@@ -543,7 +553,7 @@
                     );
                 }
                 
-                // Piores TMA (>92s)
+                // Piores TMA (>79.2s)
                 const pioresTMAGeral = document.getElementById('pioresTMAGeral');
                 if (data.piores_tma.length === 0) {
                     pioresTMAGeral.innerHTML = '<div class="excellent-ranking">🎉 Excelente! Todos os TMA estão dentro da meta!</div>';
@@ -553,7 +563,7 @@
                             pos: i + 1,
                             operador: r.nome_operador,
                             pdv: r.numero_pdv,
-                            tempo: `${r.tma}s`,
+                            tempo: `${r.tma} min`,
                             data: r.data_registro,
                             usuario: r.usuario_nome,
                             tipo: 'bad'
@@ -621,10 +631,10 @@
                 // Update day info
                 document.getElementById('totalRegistrosDia').textContent = data.total_registros_hoje;
                 
-                // Melhores TMA da Data (≤92s)
+                // Melhores TMA da Data (≤79.2s)
                 const melhoresTMAHoje = document.getElementById('melhoresTMAHoje');
                 if (!data.melhores_tma_hoje || data.melhores_tma_hoje.length === 0) {
-                    melhoresTMAHoje.innerHTML = '<div class="empty-ranking">📭 Nenhum TMA ≤ 1:32 nesta data</div>';
+                    melhoresTMAHoje.innerHTML = '<div class="empty-ranking">📭 Nenhum TMA ≤ 1,32 nesta data</div>';
                 } else {
                     const rankingData = data.melhores_tma_hoje.map((r, i) => ({
                         pos: i + 1,
@@ -637,7 +647,7 @@
                     melhoresTMAHoje.innerHTML = createRankingTable(rankingData);
                 }
                 
-                // Piores TMA da Data (>92s)
+                // Piores TMA da Data (>79.2s)
                 const pioresTMAHoje = document.getElementById('pioresTMAHoje');
                 if (!data.piores_tma_hoje || data.piores_tma_hoje.length === 0) {
                     pioresTMAHoje.innerHTML = '<div class="excellent-ranking">🎉 Nenhum TMA acima da meta nesta data!</div>';
@@ -712,10 +722,10 @@
                 // Update day info
                 document.getElementById('totalRegistrosDia').textContent = data.total_registros_hoje;
                 
-                // Melhores TMA Hoje (≤92s)
+                // Melhores TMA Hoje (≤79.2s)
                 const melhoresTMAHoje = document.getElementById('melhoresTMAHoje');
                 if (!data.melhores_tma_hoje || data.melhores_tma_hoje.length === 0) {
-                    melhoresTMAHoje.innerHTML = '<div class="empty-ranking">📭 Nenhum TMA ≤ 1:32 hoje</div>';
+                    melhoresTMAHoje.innerHTML = '<div class="empty-ranking">📭 Nenhum TMA ≤ 1,32 hoje</div>';
                 } else {
                     const rankingData = data.melhores_tma_hoje.map((r, i) => ({
                         pos: i + 1,
@@ -728,7 +738,7 @@
                     melhoresTMAHoje.innerHTML = createRankingTable(rankingData);
                 }
                 
-                // Piores TMA Hoje (>92s)
+                // Piores TMA Hoje (>79.2s)
                 const pioresTMAHoje = document.getElementById('pioresTMAHoje');
                 if (!data.piores_tma_hoje || data.piores_tma_hoje.length === 0) {
                     pioresTMAHoje.innerHTML = '<div class="excellent-ranking">🎉 Nenhum TMA acima da meta hoje!</div>';
@@ -811,30 +821,52 @@
 
         // Create ranking table helper
         function createRankingTable(rankings) {
-            console.log('🔍 createRankingTable chamada com:', rankings);
-            
             if (rankings.length === 0) {
                 return '<div class="empty-ranking">📭 Nenhum registro encontrado</div>';
             }
             
             const html = `
-                <div class="ranking-table">
+                <div class="modern-ranking-table">
                     ${rankings.map(r => `
-                        <div class="ranking-row ${r.tipo}">
-                            <div class="ranking-pos">${r.pos}°</div>
-                            <div class="ranking-details">
-                                <div class="ranking-operador">${r.operador}</div>
-                                <div class="ranking-info">PDV ${r.pdv} • ${r.tempo}</div>
-                                ${r.data ? `<div class="ranking-date">${r.data}</div>` : ''}
-                                <div class="ranking-user">👤 ${r.usuario}</div>
+                        <div class="ranking-data-row ${r.tipo}">
+                            <div class="ranking-info-left">
+                                <div class="position-badge ${r.tipo}">
+                                    ${r.pos === 1 ? '🥇' : r.pos === 2 ? '🥈' : r.pos === 3 ? '🥉' : r.pos + '°'}
+                                </div>
+                                <div class="ranking-details">
+                                    <div class="operador-name">${r.operador}</div>
+                                    <div class="ranking-meta">PDV ${r.pdv} • ${r.usuario}</div>
+                                </div>
+                            </div>
+                            <div class="ranking-info-right">
+                                <div class="tempo-value ${r.tipo}">
+                                    ${r.tempo}
+                                    ${r.tipo === 'good' ? ' ✓' : ' ⚠️'}
+                                </div>
+                                ${r.data ? `<div class="data-value">${formatDate(r.data)}</div>` : ''}
                             </div>
                         </div>
                     `).join('')}
                 </div>
             `;
             
-            console.log('🔍 HTML final criado:', html);
             return html;
+        }
+
+        // Helper function to format date
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) return dateStr; // Fallback para formato original
+                return date.toLocaleDateString('pt-BR', { 
+                    day: '2-digit', 
+                    month: '2-digit',
+                    year: '2-digit'
+                });
+            } catch (e) {
+                return dateStr; // Fallback em caso de erro
+            }
         }
 
         // Load reports
@@ -873,15 +905,15 @@
                 data: {
                     labels: data.map(d => new Date(d.data).toLocaleDateString('pt-BR')),
                     datasets: [{
-                        label: 'TMA Médio (s)',
+                        label: 'TMA Médio (min)',
                         data: data.map(d => d.tma_medio),
                         borderColor: '#4f46e5',
                         backgroundColor: 'rgba(79, 70, 229, 0.1)',
                         fill: true,
                         tension: 0.4
                     }, {
-                        label: 'Meta (92s)',
-                        data: data.map(() => 92),
+                        label: 'Meta (1.32 min)',
+                        data: data.map(() => 1.32),
                         borderColor: '#10b981',
                         borderDash: [5, 5],
                         pointRadius: 0
@@ -933,7 +965,7 @@
             charts.tmaDonut = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Dentro da Meta (≤ 92s)', 'Acima da Meta (> 92s)'],
+                    labels: ['Dentro da Meta (≤ 1.32 min)', 'Acima da Meta (> 1.32 min)'],
                     datasets: [{
                         data: [data.dentro_meta, data.acima_meta],
                         backgroundColor: ['#10b981', '#ef4444']

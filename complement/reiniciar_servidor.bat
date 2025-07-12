@@ -1,9 +1,0 @@
-@echo off
-echo 🛑 Parando processos Python...
-taskkill /f /im python.exe 2>nul
-
-echo ⏳ Aguardando...
-timeout /t 3 /nobreak >nul
-
-echo 🚀 Iniciando servidor...
-python app.py
