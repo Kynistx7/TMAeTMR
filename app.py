@@ -29,6 +29,10 @@ CORS(app, resources={
 # Prioridade absoluta para Railway DATABASE_URL
 database_url = os.environ.get('DATABASE_URL')
 
+print(f"🔍 DEBUG - DATABASE_URL: {database_url[:50] if database_url else 'NÃO ENCONTRADA'}")
+print(f"🔍 DEBUG - RAILWAY_ENVIRONMENT: {os.environ.get('RAILWAY_ENVIRONMENT')}")
+print(f"🔍 DEBUG - Variáveis de ambiente disponíveis: {list(os.environ.keys())}")
+
 if database_url:
     # Railway/Produção - usar DATABASE_URL fornecida
     if database_url.startswith('postgres://'):
@@ -36,12 +40,16 @@ if database_url:
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     print(f"🚂 Railway PostgreSQL detectado e configurado!")
     print(f"📊 Banco de dados: PostgreSQL (produção)")
+    print(f"🔗 URL do banco: {database_url[:50]}...")
     
 elif os.environ.get('RAILWAY_ENVIRONMENT'):
     # Se estamos no Railway mas DATABASE_URL não existe (erro de configuração)
     print("❌ ERRO: Railway detectado mas DATABASE_URL não encontrada!")
     print("🔧 Solução: Adicione PostgreSQL ao projeto Railway")
-    raise Exception("DATABASE_URL obrigatória no Railway")
+    print("🔧 Ou conecte o serviço PostgreSQL à aplicação")
+    # NÃO falhar - usar SQLite temporariamente
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///temp_railway.db'
+    print("⚠️ Usando SQLite temporário até PostgreSQL ser conectado")
     
 else:
     # Desenvolvimento local - tentar PostgreSQL local ou SQLite fallback
