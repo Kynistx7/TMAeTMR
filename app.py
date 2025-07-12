@@ -35,12 +35,25 @@ if not database_url:
 if not database_url:
     database_url = os.environ.get('DATABASE_PRIVATE_URL')
 
+# CONSTRUIR URL manualmente se no Railway mas sem DATABASE_URL
+if not database_url and os.environ.get('RAILWAY_ENVIRONMENT'):
+    # Tentar construir a URL com variáveis individuais do PostgreSQL
+    pg_host = os.environ.get('PGHOST') or os.environ.get('POSTGRES_HOST')
+    pg_port = os.environ.get('PGPORT') or os.environ.get('POSTGRES_PORT') or '5432'
+    pg_db = os.environ.get('PGDATABASE') or os.environ.get('POSTGRES_DB') or 'railway'
+    pg_user = os.environ.get('PGUSER') or os.environ.get('POSTGRES_USER') or 'postgres'
+    pg_password = os.environ.get('PGPASSWORD') or os.environ.get('POSTGRES_PASSWORD')
+    
+    if pg_host and pg_password:
+        database_url = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
+        print(f"🔧 URL construída manualmente: postgresql://{pg_user}:***@{pg_host}:{pg_port}/{pg_db}")
+
 print(f"🔍 DEBUG - DATABASE_URL: {database_url[:50] if database_url else 'NÃO ENCONTRADA'}")
 print(f"🔍 DEBUG - RAILWAY_ENVIRONMENT: {os.environ.get('RAILWAY_ENVIRONMENT')}")
 print(f"🔍 DEBUG - SECRET_KEY existe: {bool(os.environ.get('SECRET_KEY'))}")
 
 # Listar as variáveis que começam com DATABASE ou POSTGRES
-env_vars = [k for k in os.environ.keys() if k.startswith(('DATABASE', 'POSTGRES', 'RAILWAY'))]
+env_vars = [k for k in os.environ.keys() if k.startswith(('DATABASE', 'POSTGRES', 'RAILWAY', 'PG'))]
 print(f"🔍 DEBUG - Variáveis relacionadas: {env_vars}")
 
 # FORÇAR Railway se detectado (mesmo sem DATABASE_URL)
