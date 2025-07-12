@@ -1053,6 +1053,41 @@ def debug_info():
     else:
         return jsonify({"message": "Debug not available in production"}), 403
 
+# Inicialização automática do banco (Railway)
+def init_database_tables():
+    """Inicializa tabelas automaticamente se necessário"""
+    try:
+        with app.app_context():
+            # Verificar se as tabelas existem
+            from sqlalchemy import inspect
+            inspector = inspect(db.engine)
+            tables = inspector.get_table_names()
+            
+            if not tables or 'user' not in tables:
+                print("🔧 Criando tabelas automaticamente...")
+                db.create_all()
+                
+                # Criar admin se não existir
+                admin_user = User.query.filter_by(is_admin=True).first()
+                if not admin_user:
+                    print("👤 Criando usuário admin...")
+                    admin = User(
+                        nome='admin',
+                        senha_hash=hash_senha('admin123'),
+                        is_admin=True
+                    )
+                    db.session.add(admin)
+                    db.session.commit()
+                    print("✅ Admin criado: login=admin, senha=admin123")
+                
+            print("✅ Banco de dados verificado e inicializado")
+    except Exception as e:
+        print(f"⚠️ Erro na inicialização automática: {e}")
+
+# Inicializar automaticamente se estiver no Railway
+if os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('DATABASE_URL'):
+    init_database_tables()
+
 if __name__ == "__main__":
     print("🚀 Iniciando Sistema TMA/TMR...")
     

@@ -6,15 +6,46 @@ Cria todas as tabelas necessárias no PostgreSQL
 """
 import sys
 import os
+import time
 
 # Adicionar o diretório atual ao path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
 
+def wait_for_database():
+    """Aguarda o banco de dados estar disponível"""
+    max_retries = 30
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        try:
+            # Importar a aplicação
+            from app import app, db
+            
+            # Configurar contexto da aplicação
+            with app.app_context():
+                # Tentar conectar ao banco
+                db.engine.execute('SELECT 1')
+                print("✅ Banco de dados disponível!")
+                return True
+                
+        except Exception as e:
+            retry_count += 1
+            print(f"⏳ Aguardando banco... tentativa {retry_count}/{max_retries}")
+            print(f"   Erro: {e}")
+            time.sleep(2)
+    
+    print("❌ Timeout: Banco de dados não disponível")
+    return False
+
 def init_railway_database():
     """Inicializa o banco de dados no Railway"""
     try:
         print("🚂 Iniciando configuração do banco Railway...")
+        
+        # Aguardar banco estar disponível
+        if not wait_for_database():
+            return False
         
         # Importar a aplicação
         from app import app, db
@@ -28,16 +59,17 @@ def init_railway_database():
             db.create_all()
             
             # Verificar se existe usuário admin
-            from app import Usuario
-            admin_user = Usuario.query.filter_by(is_admin=True).first()
+            from app import User
+            admin_user = User.query.filter_by(is_admin=True).first()
             
             if not admin_user:
                 print("👤 Criando usuário administrador padrão...")
                 
                 # Criar admin padrão
-                admin = Usuario(
+                from app import hash_senha
+                admin = User(
                     nome='admin',
-                    password_hash=Usuario.hash_password('admin123'),
+                    senha_hash=hash_senha('admin123'),
                     is_admin=True
                 )
                 
