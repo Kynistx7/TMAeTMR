@@ -540,6 +540,237 @@ def admin_graficos():
         print(f"❌ Erro ao buscar dados para gráficos: {e}")
         return jsonify({"erro": str(e)}), 500
 
+@app.route("/api/admin/chart-data")
+def admin_chart_data():
+    """Dados específicos para gráficos da aba relatórios"""
+    if not verificar_admin():
+        return jsonify({"erro": "Acesso negado"}), 403
+    
+    try:
+        from sqlalchemy import func
+        from datetime import datetime, timedelta
+        
+        # Parâmetros de data
+        start_date = request.args.get('start')
+        end_date = request.args.get('end')
+        
+        if not start_date or not end_date:
+            return jsonify({"erro": "Parâmetros de data obrigatórios"}), 400
+            
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        
+        # Metas
+        META_TMA = 92.0
+        META_TMR = 6.0
+        
+        # 1. TMA e TMR médios por dia
+        tma_por_dia = db.session.query(
+            Registro.data_registro,
+            func.avg(Registro.tma).label('tma_medio')
+        ).filter(
+            Registro.data_registro >= start_date,
+            Registro.data_registro <= end_date
+        ).group_by(Registro.data_registro).order_by(Registro.data_registro).all()
+        
+        tmr_por_dia = db.session.query(
+            Registro.data_registro,
+            func.avg(Registro.tmr).label('tmr_medio')
+        ).filter(
+            Registro.data_registro >= start_date,
+            Registro.data_registro <= end_date
+        ).group_by(Registro.data_registro).order_by(Registro.data_registro).all()
+        
+        # 2. Distribuição TMA (conformidade)
+        tma_dentro_meta = db.session.query(func.count(Registro.id)).filter(
+            Registro.data_registro >= start_date,
+            Registro.data_registro <= end_date,
+            Registro.tma <= META_TMA
+        ).scalar() or 0
+        
+        tma_acima_meta = db.session.query(func.count(Registro.id)).filter(
+            Registro.data_registro >= start_date,
+            Registro.data_registro <= end_date,
+            Registro.tma > META_TMA
+        ).scalar() or 0
+        
+        # 3. Distribuição TMR (conformidade)
+        tmr_dentro_meta = db.session.query(func.count(Registro.id)).filter(
+            Registro.data_registro >= start_date,
+            Registro.data_registro <= end_date,
+            Registro.tmr <= META_TMR
+        ).scalar() or 0
+        
+        tmr_acima_meta = db.session.query(func.count(Registro.id)).filter(
+            Registro.data_registro >= start_date,
+            Registro.data_registro <= end_date,
+            Registro.tmr > META_TMR
+        ).scalar() or 0
+        
+        # 4. Performance por usuário
+        user_performance = db.session.query(
+            User.nome.label('usuario'),
+            func.avg(Registro.tma).label('tma_medio'),
+            func.avg(Registro.tmr).label('tmr_medio'),
+            func.count(Registro.id).label('total_registros')
+        ).join(Registro).filter(
+            Registro.data_registro >= start_date,
+            Registro.data_registro <= end_date
+        ).group_by(User.id, User.nome).order_by(func.count(Registro.id).desc()).all()
+        
+        # 5. Estatísticas resumo
+        total_registros = db.session.query(func.count(Registro.id)).filter(
+            Registro.data_registro >= start_date,
+            Registro.data_registro <= end_date
+        ).scalar() or 0
+        
+        if total_registros > 0:
+            tma_medio_geral = db.session.query(func.avg(Registro.tma)).filter(
+                Registro.data_registro >= start_date,
+                Registro.data_registro <= end_date
+            ).scalar() or 0
+            
+            tmr_medio_geral = db.session.query(func.avg(Registro.tmr)).filter(
+                Registro.data_registro >= start_date,
+                Registro.data_registro <= end_date
+            ).scalar() or 0
+            
+            conformidade_tma = round((tma_dentro_meta / total_registros) * 100, 1)
+            conformidade_tmr = round((tmr_dentro_meta / total_registros) * 100, 1)
+            
+            usuarios_ativos = db.session.query(func.count(func.distinct(Registro.user_id))).filter(
+                Registro.data_registro >= start_date,
+                Registro.data_registro <= end_date
+            ).scalar() or 0
+        else:
+            tma_medio_geral = tmr_medio_geral = 0
+            conformidade_tma = conformidade_tmr = 0
+            usuarios_ativos = 0
+        
+        return jsonify({
+            "tma_por_dia": [
+                {
+                    "data": d.data_registro.strftime('%Y-%m-%d'),
+                    "tma_medio": round(float(d.tma_medio), 1)
+                } for d in tma_por_dia
+            ],
+            "tmr_por_dia": [
+                {
+                    "data": d.data_registro.strftime('%Y-%m-%d'),
+                    "tmr_medio": round(float(d.tmr_medio), 1)
+                } for d in tmr_por_dia
+            ],
+            "tma_distribution": {
+                "dentro_meta": tma_dentro_meta,
+                "acima_meta": tma_acima_meta
+            },
+            "tmr_distribution": {
+                "dentro_meta": tmr_dentro_meta,
+                "acima_meta": tmr_acima_meta
+            },
+            "user_performance": [
+                {
+                    "usuario": d.usuario,
+                    "tma_medio": round(float(d.tma_medio), 1),
+                    "tmr_medio": round(float(d.tmr_medio), 1),
+                    "total_registros": d.total_registros
+                } for d in user_performance
+            ],
+            "stats_summary": {
+                "total_registros": total_registros,
+                "tma_medio": round(float(tma_medio_geral), 1),
+                "tmr_medio": round(float(tmr_medio_geral), 1),
+                "conformidade_tma": conformidade_tma,
+                "conformidade_tmr": conformidade_tmr,
+                "usuarios_ativos": usuarios_ativos
+            }
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro ao buscar dados dos gráficos: {e}")
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/admin/usuarios")
+def admin_usuarios():
+    """Lista usuários para o painel admin"""
+    if not verificar_admin():
+        return jsonify({"erro": "Acesso negado"}), 403
+    
+    try:
+        from sqlalchemy import func
+        
+        usuarios = db.session.query(
+            User.id,
+            User.nome,
+            User.is_admin,
+            func.count(Registro.id).label('total_registros')
+        ).outerjoin(Registro).group_by(User.id, User.nome, User.is_admin).all()
+        
+        return jsonify({
+            "usuarios": [
+                {
+                    "id": u.id,
+                    "nome": u.nome,
+                    "is_admin": u.is_admin,
+                    "total_registros": u.total_registros
+                } for u in usuarios
+            ]
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro ao buscar usuários: {e}")
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/admin/usuarios/<int:user_id>", methods=["DELETE"])
+def admin_delete_user(user_id):
+    """Deletar usuário"""
+    if not verificar_admin():
+        return jsonify({"erro": "Acesso negado"}), 403
+    
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"erro": "Usuário não encontrado"}), 404
+        
+        if user.is_admin:
+            return jsonify({"erro": "Não é possível deletar um administrador"}), 400
+        
+        # Deletar registros do usuário primeiro
+        Registro.query.filter_by(user_id=user_id).delete()
+        
+        # Deletar o usuário
+        db.session.delete(user)
+        db.session.commit()
+        
+        return jsonify({"message": f"Usuário '{user.nome}' deletado com sucesso"})
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erro ao deletar usuário: {e}")
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/admin/registros/<int:record_id>", methods=["DELETE"])
+def admin_delete_record(record_id):
+    """Deletar registro específico"""
+    if not verificar_admin():
+        return jsonify({"erro": "Acesso negado"}), 403
+    
+    try:
+        record = Registro.query.get(record_id)
+        if not record:
+            return jsonify({"erro": "Registro não encontrado"}), 404
+        
+        # Deletar o registro
+        db.session.delete(record)
+        db.session.commit()
+        
+        return jsonify({"message": "Registro deletado com sucesso"})
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erro ao deletar registro: {e}")
+        return jsonify({"erro": str(e)}), 500
+
 @app.route("/api/admin/top-tempos")
 def admin_top_tempos():
     """Top 10 melhores e piores tempos de TMA e TMR"""
@@ -550,17 +781,17 @@ def admin_top_tempos():
         from sqlalchemy import func
         
         # Metas configuráveis (em segundos)
-        META_TMA = 180.0  # 3 minutos
-        META_TMR = 120.0  # 2 minutos
+        META_TMA = 92.0   # 1:32 (1 minuto e 32 segundos)
+        META_TMR = 6.0    # 6 segundos
         
-        # Top 10 melhores TMA (menores tempos)
+        # Top 10 melhores TMA (apenas tempos DENTRO da meta)
         melhores_tma = db.session.query(
             Registro.nome_operador,
             Registro.numero_pdv,
             Registro.tma,
             Registro.data_registro,
             User.nome.label('usuario_nome')
-        ).join(User).order_by(Registro.tma.asc()).limit(10).all()
+        ).join(User).filter(Registro.tma <= META_TMA).order_by(Registro.tma.asc()).limit(10).all()
         
         # Top 10 piores TMA (apenas tempos ACIMA da meta)
         piores_tma = db.session.query(
@@ -571,14 +802,14 @@ def admin_top_tempos():
             User.nome.label('usuario_nome')
         ).join(User).filter(Registro.tma > META_TMA).order_by(Registro.tma.desc()).limit(10).all()
         
-        # Top 10 melhores TMR (menores tempos)
+        # Top 10 melhores TMR (apenas tempos DENTRO da meta)
         melhores_tmr = db.session.query(
             Registro.nome_operador,
             Registro.numero_pdv,
             Registro.tmr,
             Registro.data_registro,
             User.nome.label('usuario_nome')
-        ).join(User).order_by(Registro.tmr.asc()).limit(10).all()
+        ).join(User).filter(Registro.tmr <= META_TMR).order_by(Registro.tmr.asc()).limit(10).all()
         
         # Top 10 piores TMR (apenas tempos ACIMA da meta)
         piores_tmr = db.session.query(
@@ -590,46 +821,40 @@ def admin_top_tempos():
         ).join(User).filter(Registro.tmr > META_TMR).order_by(Registro.tmr.desc()).limit(10).all()
         
         return jsonify({
-            "meta_tma": META_TMA,
-            "meta_tmr": META_TMR,
             "melhores_tma": [
                 {
                     "nome_operador": r.nome_operador,
                     "numero_pdv": r.numero_pdv,
-                    "tma": r.tma,
-                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
-                    "usuario_nome": r.usuario_nome,
-                    "dentro_meta": r.tma <= META_TMA
+                    "tma": round(float(r.tma), 2),
+                    "data_registro": r.data_registro.strftime('%Y-%m-%d'),
+                    "usuario_nome": r.usuario_nome
                 } for r in melhores_tma
             ],
             "piores_tma": [
                 {
                     "nome_operador": r.nome_operador,
                     "numero_pdv": r.numero_pdv,
-                    "tma": r.tma,
-                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
-                    "usuario_nome": r.usuario_nome,
-                    "acima_meta": r.tma > META_TMA
+                    "tma": round(float(r.tma), 2),
+                    "data_registro": r.data_registro.strftime('%Y-%m-%d'),
+                    "usuario_nome": r.usuario_nome
                 } for r in piores_tma
             ],
             "melhores_tmr": [
                 {
                     "nome_operador": r.nome_operador,
                     "numero_pdv": r.numero_pdv,
-                    "tmr": r.tmr,
-                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
-                    "usuario_nome": r.usuario_nome,
-                    "dentro_meta": r.tmr <= META_TMR
+                    "tmr": round(float(r.tmr), 2),
+                    "data_registro": r.data_registro.strftime('%Y-%m-%d'),
+                    "usuario_nome": r.usuario_nome
                 } for r in melhores_tmr
             ],
             "piores_tmr": [
                 {
                     "nome_operador": r.nome_operador,
                     "numero_pdv": r.numero_pdv,
-                    "tmr": r.tmr,
-                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
-                    "usuario_nome": r.usuario_nome,
-                    "acima_meta": r.tmr > META_TMR
+                    "tmr": round(float(r.tmr), 2),
+                    "data_registro": r.data_registro.strftime('%Y-%m-%d'),
+                    "usuario_nome": r.usuario_nome
                 } for r in piores_tmr
             ]
         })
@@ -640,247 +865,108 @@ def admin_top_tempos():
 
 @app.route("/api/admin/top-tempos-diario")
 def admin_top_tempos_diario():
-    """Top 10 melhores e piores tempos de TMA e TMR do dia atual"""
+    """Top tempos do dia ou data específica"""
     if not verificar_admin():
         return jsonify({"erro": "Acesso negado"}), 403
     
     try:
-        from sqlalchemy import func
-        from datetime import date
+        from datetime import datetime, date
         
-        # Metas configuráveis (em segundos)
-        META_TMA = 180.0  # 3 minutos
-        META_TMR = 120.0  # 2 minutos
+        # Verificar se foi passada uma data específica
+        data_param = request.args.get('data')
+        if data_param:
+            data_filtro = datetime.strptime(data_param, '%Y-%m-%d').date()
+        else:
+            data_filtro = date.today()
         
-        # Data de hoje
-        hoje = date.today()
+        META_TMA = 92.0
+        META_TMR = 6.0
         
-        # Top 10 melhores TMA do dia (menores tempos)
+        # Contar registros da data
+        total_registros_hoje = Registro.query.filter_by(data_registro=data_filtro).count()
+        
+        # Melhores TMA do dia
         melhores_tma_hoje = db.session.query(
             Registro.nome_operador,
             Registro.numero_pdv,
             Registro.tma,
-            Registro.data_registro,
             User.nome.label('usuario_nome')
         ).join(User).filter(
-            Registro.data_registro == hoje
+            Registro.data_registro == data_filtro,
+            Registro.tma <= META_TMA
         ).order_by(Registro.tma.asc()).limit(10).all()
         
-        # Top 10 piores TMA do dia (apenas tempos ACIMA da meta)
+        # Piores TMA do dia
         piores_tma_hoje = db.session.query(
             Registro.nome_operador,
             Registro.numero_pdv,
             Registro.tma,
-            Registro.data_registro,
             User.nome.label('usuario_nome')
         ).join(User).filter(
-            Registro.data_registro == hoje,
+            Registro.data_registro == data_filtro,
             Registro.tma > META_TMA
         ).order_by(Registro.tma.desc()).limit(10).all()
         
-        # Top 10 melhores TMR do dia (menores tempos)
+        # Melhores TMR do dia
         melhores_tmr_hoje = db.session.query(
             Registro.nome_operador,
             Registro.numero_pdv,
             Registro.tmr,
-            Registro.data_registro,
             User.nome.label('usuario_nome')
         ).join(User).filter(
-            Registro.data_registro == hoje
+            Registro.data_registro == data_filtro,
+            Registro.tmr <= META_TMR
         ).order_by(Registro.tmr.asc()).limit(10).all()
         
-        # Top 10 piores TMR do dia (apenas tempos ACIMA da meta)
+        # Piores TMR do dia
         piores_tmr_hoje = db.session.query(
             Registro.nome_operador,
             Registro.numero_pdv,
             Registro.tmr,
-            Registro.data_registro,
             User.nome.label('usuario_nome')
         ).join(User).filter(
-            Registro.data_registro == hoje,
+            Registro.data_registro == data_filtro,
             Registro.tmr > META_TMR
         ).order_by(Registro.tmr.desc()).limit(10).all()
         
-        # Contar total de registros do dia
-        total_registros_hoje = db.session.query(Registro).filter(
-            Registro.data_registro == hoje
-        ).count()
-        
         return jsonify({
-            "data_consulta": hoje.strftime('%d/%m/%Y'),
             "total_registros_hoje": total_registros_hoje,
-            "meta_tma": META_TMA,
-            "meta_tmr": META_TMR,
             "melhores_tma_hoje": [
                 {
                     "nome_operador": r.nome_operador,
                     "numero_pdv": r.numero_pdv,
-                    "tma": r.tma,
-                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
-                    "usuario_nome": r.usuario_nome,
-                    "dentro_meta": r.tma <= META_TMA
+                    "tma": round(float(r.tma), 2),
+                    "usuario_nome": r.usuario_nome
                 } for r in melhores_tma_hoje
             ],
             "piores_tma_hoje": [
                 {
                     "nome_operador": r.nome_operador,
                     "numero_pdv": r.numero_pdv,
-                    "tma": r.tma,
-                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
-                    "usuario_nome": r.usuario_nome,
-                    "acima_meta": r.tma > META_TMA
+                    "tma": round(float(r.tma), 2),
+                    "usuario_nome": r.usuario_nome
                 } for r in piores_tma_hoje
             ],
             "melhores_tmr_hoje": [
                 {
                     "nome_operador": r.nome_operador,
                     "numero_pdv": r.numero_pdv,
-                    "tmr": r.tmr,
-                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
-                    "usuario_nome": r.usuario_nome,
-                    "dentro_meta": r.tmr <= META_TMR
+                    "tmr": round(float(r.tmr), 2),
+                    "usuario_nome": r.usuario_nome
                 } for r in melhores_tmr_hoje
             ],
             "piores_tmr_hoje": [
                 {
                     "nome_operador": r.nome_operador,
                     "numero_pdv": r.numero_pdv,
-                    "tmr": r.tmr,
-                    "data_registro": r.data_registro.strftime('%d/%m/%Y'),
-                    "usuario_nome": r.usuario_nome,
-                    "acima_meta": r.tmr > META_TMR
+                    "tmr": round(float(r.tmr), 2),
+                    "usuario_nome": r.usuario_nome
                 } for r in piores_tmr_hoje
             ]
         })
         
     except Exception as e:
         print(f"❌ Erro ao buscar top tempos diário: {e}")
-        return jsonify({"erro": str(e)}), 500
-
-@app.route("/api/admin/usuarios")
-def admin_usuarios():
-    """Lista todos os usuários para o painel admin"""
-    if not verificar_admin():
-        return jsonify({"erro": "Acesso negado"}), 403
-    
-    try:
-        usuarios = User.query.all()
-        
-        usuarios_data = []
-        for user in usuarios:
-            # Buscar registros do usuário
-            registros_user = Registro.query.filter_by(user_id=user.id).all()
-            
-            # Preparar dados dos registros
-            registros_data = []
-            for registro in registros_user:
-                registros_data.append({
-                    "id": registro.id,
-                    "data_registro": registro.data_registro.strftime("%d/%m/%Y"),
-                    "nome_operador": registro.nome_operador,
-                    "numero_pdv": registro.numero_pdv,
-                    "tma": registro.tma,
-                    "tmr": registro.tmr
-                })
-            
-            usuarios_data.append({
-                "id": user.id,
-                "nome": user.nome,
-                "is_admin": user.is_admin,
-                "total_registros": len(registros_data),
-                "registros": registros_data
-            })
-        
-        return jsonify({
-            "usuarios": usuarios_data,
-            "total": len(usuarios_data)
-        })
-        
-    except Exception as e:
-        print(f"❌ Erro ao buscar usuários: {e}")
-        return jsonify({"erro": str(e)}), 500
-
-@app.route("/api/admin/registros")
-def admin_registros():
-    """Lista todos os registros para o painel admin"""
-    if not verificar_admin():
-        return jsonify({"erro": "Acesso negado"}), 403
-    
-    try:
-        registros = Registro.query.order_by(Registro.data_registro.desc()).all()
-        
-        registros_data = []
-        for registro in registros:
-            registros_data.append({
-                "id": registro.id,
-                "nome_operador": registro.nome_operador,
-                "tma": registro.tma,
-                "tmr": registro.tmr,
-                "data_registro": registro.data_registro.strftime("%d/%m/%Y"),
-                "numero_pdv": registro.numero_pdv,
-                "user_id": registro.user_id,
-                "usuario_nome": registro.user.nome if registro.user else "N/A"
-            })
-        
-        return jsonify({
-            "registros": registros_data,
-            "total": len(registros_data)
-        })
-        
-    except Exception as e:
-        print(f"❌ Erro ao buscar registros: {e}")
-        return jsonify({"erro": str(e)}), 500
-
-@app.route("/api/admin/usuarios/<int:user_id>", methods=["DELETE"])
-def deletar_usuario_admin(user_id):
-    """Deleta um usuário e todos seus registros (admin)"""
-    if not verificar_admin():
-        return jsonify({"erro": "Acesso negado"}), 403
-    
-    try:
-        user = User.query.get(user_id)
-        if not user:
-            return jsonify({"erro": "Usuário não encontrado"}), 404
-        
-        # Não permitir deletar outros admins
-        if user.is_admin:
-            return jsonify({"erro": "Não é possível deletar outros administradores"}), 403
-        
-        nome_usuario = user.nome
-        
-        # Deletar todos os registros do usuário primeiro
-        Registro.query.filter_by(user_id=user_id).delete()
-        
-        # Deletar o usuário
-        db.session.delete(user)
-        db.session.commit()
-        
-        return jsonify({"ok": True, "message": f"Usuário '{nome_usuario}' deletado com sucesso"})
-        
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Erro ao deletar usuário: {e}")
-        return jsonify({"erro": str(e)}), 500
-
-@app.route("/api/admin/registros/<int:registro_id>", methods=["DELETE"])
-def deletar_registro_admin(registro_id):
-    """Deleta um registro específico (admin)"""
-    if not verificar_admin():
-        return jsonify({"erro": "Acesso negado"}), 403
-    
-    try:
-        registro = Registro.query.get(registro_id)
-        if not registro:
-            return jsonify({"erro": "Registro não encontrado"}), 404
-        
-        db.session.delete(registro)
-        db.session.commit()
-        
-        return jsonify({"ok": True, "message": "Registro deletado com sucesso"})
-        
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Erro ao deletar registro: {e}")
         return jsonify({"erro": str(e)}), 500
 
 # Rota específica para healthcheck do Railway

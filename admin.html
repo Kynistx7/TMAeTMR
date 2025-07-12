@@ -2,206 +2,290 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="device-width, initial-scale=1.0">
     <title>Admin - Sistema TMA/TMR</title>
-    <link rel="stylesheet" href="css/admin.css?v=9.0">
+    <link rel="stylesheet" href="css/admin.css?v=2.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 </head>
 <body class="admin-page">
     <div class="admin-container">
+        <!-- Header -->
         <div class="admin-header">
             <h1>🛠️ Painel Administrativo</h1>
             <p>Sistema TMA/TMR - Gestão Completa</p>
-            <button class="logout-btn" onclick="logout()">Logout</button>
+            <button class="admin-logout-btn" onclick="logout()">Logout</button>
         </div>
 
-        <!-- Estatísticas Gerais -->
-        <div class="stats-grid" id="statsGrid">
-            <div class="stat-card">
-                <div class="stat-number" id="totalUsuarios">-</div>
-                <div class="stat-label">Total de Usuários</div>
+        <!-- Stats -->
+        <div class="admin-stats">
+            <div class="admin-stat-card">
+                <div class="admin-stat-number" id="totalUsuarios">-</div>
+                <div class="admin-stat-label">Total de Usuários</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number" id="totalRegistros">-</div>
-                <div class="stat-label">Total de Registros</div>
+            <div class="admin-stat-card">
+                <div class="admin-stat-number" id="totalRegistros">-</div>
+                <div class="admin-stat-label">Total de Registros</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number" id="tmaGeral">-</div>
-                <div class="stat-label">TMA Médio Geral</div>
+            <div class="admin-stat-card">
+                <div class="admin-stat-number" id="tmaGeral">-</div>
+                <div class="admin-stat-label">TMA Médio Geral</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number" id="tmrGeral">-</div>
-                <div class="stat-label">TMR Médio Geral</div>
+            <div class="admin-stat-card">
+                <div class="admin-stat-number" id="tmrGeral">-</div>
+                <div class="admin-stat-label">TMR Médio Geral</div>
             </div>
         </div>
 
-        <!-- Abas -->
-        <div class="tabs">
-            <button class="tab active" onclick="showTab('usuarios')">👥 Usuários</button>
-            <button class="tab" onclick="showTab('graficos')">📊 Gráficos</button>
-            <button class="tab" onclick="showTab('relatorios')">📋 Relatórios</button>
-            <button class="tab" onclick="showTab('top-tempos')">🏆 Top 10</button>
+        <!-- Navigation -->
+        <div class="admin-nav">
+            <button class="admin-nav-btn active" onclick="showSection('usuarios')">👥 Usuários</button>
+            <button class="admin-nav-btn" onclick="showSection('top-tempos')">🏆 Top 10</button>
+            <button class="admin-nav-btn" onclick="showSection('relatorios')">📋 Relatórios</button>
         </div>
 
-        <!-- Aba Usuários -->
-        <div id="usuarios" class="tab-content active">
+        <!-- Usuários Section -->
+        <div id="usuarios" class="admin-content active">
             <h2>Gerenciamento de Usuários</h2>
-            <div id="usuariosList" class="loading">Carregando usuários...</div>
+            <div id="usuariosList" class="admin-loading">Carregando usuários...</div>
         </div>
 
-        <!-- Aba Gráficos -->
-        <div id="graficos" class="tab-content">
-            <h2>Análise de Dados</h2>
-            
-            <div class="chart-container">
-                <h3>TMA/TMR por PDV</h3>
-                <canvas id="chartPDV"></canvas>
+        <!-- Top 10 Section -->
+        <div id="top-tempos" class="admin-content">
+            <h2>🏆 Ranking de Tempos - Melhores e Piores</h2>
+            <div class="ranking-info">
+                <p><strong>📏 Critérios:</strong></p>
+                <p>• <span class="meta-good">TMA ≤ 1:32 (92s)</span> e <span class="meta-good">TMR ≤ 6s</span> = Melhores Tempos</p>
+                <p>• <span class="meta-bad">TMA > 1:32 (92s)</span> e <span class="meta-bad">TMR > 6s</span> = Piores Tempos</p>
             </div>
             
-            <div class="chart-container">
-                <h3>Evolução Temporal (Últimos 30 dias)</h3>
-                <canvas id="chartTemporal"></canvas>
+            <!-- Navigation Tabs -->
+            <div class="ranking-tabs">
+                <button class="ranking-tab active" onclick="showRankingPeriod('geral')">📊 Ranking Geral</button>
+                <button class="ranking-tab" onclick="showRankingPeriod('diario')">📅 Ranking do Dia</button>
             </div>
             
-            <div class="chart-container">
-                <h3>Top 10 Operadores</h3>
-                <canvas id="chartOperadores"></canvas>
-            </div>
-        </div>
-
-        <!-- Aba Relatórios -->
-        <div id="relatorios" class="tab-content">
-            <h2>Relatórios Detalhados</h2>
-            <div id="relatoriosContent">
-                <h3>Relatório por PDV</h3>
-                <div id="relatorioPDV"></div>
+            <!-- Ranking Geral -->
+            <div id="ranking-geral" class="ranking-period active">
+                <h3>📊 Todos os Tempos Registrados</h3>
                 
-                <h3>Top Usuários</h3>
-                <div id="relatorioUsuarios"></div>
+                <div class="ranking-grid">
+                    <!-- Melhores Tempos TMA -->
+                    <div class="ranking-card good">
+                        <div class="ranking-header">
+                            <h4>🎯 Melhores TMA (≤ 1:32)</h4>
+                            <span class="meta-badge good">Meta: 92s</span>
+                        </div>
+                        <div id="melhoresTMAGeral" class="ranking-content">Carregando...</div>
+                    </div>
+                    
+                    <!-- Piores Tempos TMA -->
+                    <div class="ranking-card bad">
+                        <div class="ranking-header">
+                            <h4>⚠️ Piores TMA (> 1:32)</h4>
+                            <span class="meta-badge bad">Acima de 92s</span>
+                        </div>
+                        <div id="pioresTMAGeral" class="ranking-content">Carregando...</div>
+                    </div>
+                    
+                    <!-- Melhores Tempos TMR -->
+                    <div class="ranking-card good">
+                        <div class="ranking-header">
+                            <h4>🎯 Melhores TMR (≤ 6s)</h4>
+                            <span class="meta-badge good">Meta: 6s</span>
+                        </div>
+                        <div id="melhoresTMRGeral" class="ranking-content">Carregando...</div>
+                    </div>
+                    
+                    <!-- Piores Tempos TMR -->
+                    <div class="ranking-card bad">
+                        <div class="ranking-header">
+                            <h4>⚠️ Piores TMR (> 6s)</h4>
+                            <span class="meta-badge bad">Acima de 6s</span>
+                        </div>
+                        <div id="pioresTMRGeral" class="ranking-content">Carregando...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ranking Diário -->
+            <div id="ranking-diario" class="ranking-period">
+                <h3>📅 Ranking por Data</h3>
+                
+                <!-- Seletor de Data -->
+                <div class="date-selector">
+                    <label for="seletorData">📅 Selecionar Data:</label>
+                    <input type="date" id="seletorData" />
+                    <button id="botaoHoje" class="date-today-btn">📅 Hoje</button>
+                </div>
+                
+                <div class="day-info">
+                    <p id="periodoAtual">📅 Hoje</p>
+                    <p>Total de registros: <span id="totalRegistrosDia">-</span></p>
+                </div>
+                
+                <div class="ranking-grid">
+                    <!-- Melhores Tempos TMA Hoje -->
+                    <div class="ranking-card good">
+                        <div class="ranking-header">
+                            <h4>🎯 Melhores TMA Hoje (≤ 1:32)</h4>
+                            <span class="meta-badge good">Meta: 92s</span>
+                        </div>
+                        <div id="melhoresTMAHoje" class="ranking-content">Carregando...</div>
+                    </div>
+                    
+                    <!-- Piores Tempos TMA Hoje -->
+                    <div class="ranking-card bad">
+                        <div class="ranking-header">
+                            <h4>⚠️ Piores TMA Hoje (> 1:32)</h4>
+                            <span class="meta-badge bad">Acima de 92s</span>
+                        </div>
+                        <div id="pioresTMAHoje" class="ranking-content">Carregando...</div>
+                    </div>
+                    
+                    <!-- Melhores Tempos TMR Hoje -->
+                    <div class="ranking-card good">
+                        <div class="ranking-header">
+                            <h4>🎯 Melhores TMR Hoje (≤ 6s)</h4>
+                            <span class="meta-badge good">Meta: 6s</span>
+                        </div>
+                        <div id="melhoresTMRHoje" class="ranking-content">Carregando...</div>
+                    </div>
+                    
+                    <!-- Piores Tempos TMR Hoje -->
+                    <div class="ranking-card bad">
+                        <div class="ranking-header">
+                            <h4>⚠️ Piores TMR Hoje (> 6s)</h4>
+                            <span class="meta-badge bad">Acima de 6s</span>
+                        </div>
+                        <div id="pioresTMRHoje" class="ranking-content">Carregando...</div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Aba Top 10 -->
-        <div id="top-tempos" class="tab-content">
-            <h2>🏆 Top 10 - Melhores e Piores Tempos</h2>
+        <!-- Relatórios Section -->
+        <div id="relatorios" class="admin-content">
+            <h2>📋 Relatórios e Gráficos</h2>
             
-            <!-- Seletor de Período -->
-            <div class="periodo-selector">
-                <button id="btn-geral" class="periodo-btn active" onclick="mostrarPeriodo('geral')">📊 Geral (Todos os Tempos)</button>
-                <button id="btn-diario" class="periodo-btn" onclick="mostrarPeriodo('diario')">📅 Diário (Hoje)</button>
+            <!-- Filtros simples -->
+            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <label for="reportPeriod">📅 Período: </label>
+                <select id="reportPeriod" style="padding: 8px; margin-right: 10px;">
+                    <option value="7">Últimos 7 dias</option>
+                    <option value="30" selected>Últimos 30 dias</option>
+                </select>
+                <button onclick="loadCharts()" style="background: #4f46e5; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">🔄 Atualizar</button>
             </div>
             
-            <!-- Top 10 Geral -->
-            <div id="top-geral" class="periodo-content active">
-                <h3 class="periodo-title">📊 Ranking Geral de Todos os Tempos</h3>
-                <div class="top-container">
-                    <div class="top-section">
-                        <h3>✅ Top 10 Melhores TMA (Menores Tempos)</h3>
-                        <div id="melhoresTMA" class="loading">Carregando...</div>
-                    </div>
-                    
-                    <div class="top-section">
-                        <h3>⚠️ Top 10 Piores TMA (Maiores Tempos)</h3>
-                        <div id="pioresTMA" class="loading">Carregando...</div>
-                    </div>
-                    
-                    <div class="top-section">
-                        <h3>✅ Top 10 Melhores TMR (Menores Tempos)</h3>
-                        <div id="melhoresTMR" class="loading">Carregando...</div>
-                    </div>
-                    
-                    <div class="top-section">
-                        <h3>⚠️ Top 10 Piores TMR (Maiores Tempos)</h3>
-                        <div id="pioresTMR" class="loading">Carregando...</div>
-                    </div>
+            <!-- Gráficos -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div style="background: white; padding: 20px; border-radius: 8px;">
+                    <h3>📊 TMA Médio por Dia</h3>
+                    <canvas id="tmaChart" style="max-height: 300px;"></canvas>
+                </div>
+                <div style="background: white; padding: 20px; border-radius: 8px;">
+                    <h3>📊 TMR Médio por Dia</h3>
+                    <canvas id="tmrChart" style="max-height: 300px;"></canvas>
                 </div>
             </div>
             
-            <!-- Top 10 Diário -->
-            <div id="top-diario" class="periodo-content">
-                <h3 class="periodo-title">📅 Ranking do Dia - <span id="data-hoje">11/07/2025</span></h3>
-                <div class="top-info">
-                    <p>Total de registros hoje: <span id="total-hoje">-</span></p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div style="background: white; padding: 20px; border-radius: 8px;">
+                    <h3>🎯 Conformidade TMA</h3>
+                    <canvas id="tmaDonutChart" style="max-height: 300px;"></canvas>
                 </div>
-                <div class="top-container">
-                    <div class="top-section">
-                        <h3>✅ Top 10 Melhores TMA Hoje</h3>
-                        <div id="melhoresTMAHoje" class="loading">Carregando...</div>
-                    </div>
-                    
-                    <div class="top-section">
-                        <h3>⚠️ Top 10 Piores TMA Hoje</h3>
-                        <div id="pioresTMAHoje" class="loading">Carregando...</div>
-                    </div>
-                    
-                    <div class="top-section">
-                        <h3>✅ Top 10 Melhores TMR Hoje</h3>
-                        <div id="melhoresTMRHoje" class="loading">Carregando...</div>
-                    </div>
-                    
-                    <div class="top-section">
-                        <h3>⚠️ Top 10 Piores TMR Hoje</h3>
-                        <div id="pioresTMRHoje" class="loading">Carregando...</div>
-                    </div>
+                <div style="background: white; padding: 20px; border-radius: 8px;">
+                    <h3>🎯 Conformidade TMR</h3>
+                    <canvas id="tmrDonutChart" style="max-height: 300px;"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // Global variables
         let currentData = {};
-        let charts = {};
 
-        // Função para mostrar abas
-        function showTab(tabName) {
-            // Remover classe active de todas as abas
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+        // Show section
+        function showSection(sectionName) {
+            // Remove active from all nav buttons
+            document.querySelectorAll('.admin-nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.admin-content').forEach(content => content.classList.remove('active'));
             
-            // Ativar aba selecionada
+            // Activate selected
             event.target.classList.add('active');
-            document.getElementById(tabName).style.display = 'block';
+            document.getElementById(sectionName).classList.add('active');
             
-            // Carregar dados específicos da aba
-            if (tabName === 'graficos') {
-                carregarGraficos();
-            } else if (tabName === 'relatorios') {
-                carregarRelatorios();
-            } else if (tabName === 'top-tempos') {
-                carregarTopTempos();
-                atualizarDataHoje();
+            // Load specific data
+            if (sectionName === 'top-tempos') {
+                loadRankingGeral();
+                updateToday();
+            } else if (sectionName === 'relatorios') {
+                loadReports();
             }
         }
 
-        // Função para mostrar período (Geral ou Diário)
-        function mostrarPeriodo(periodo) {
-            // Remover classe active dos botões
-            document.querySelectorAll('.periodo-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.periodo-content').forEach(content => content.classList.remove('active'));
+        // Show ranking period
+        function showRankingPeriod(period) {
+            // Remove active from all ranking tabs
+            document.querySelectorAll('.ranking-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.ranking-period').forEach(content => content.classList.remove('active'));
             
-            // Ativar período selecionado
-            document.getElementById(`btn-${periodo}`).classList.add('active');
-            document.getElementById(`top-${periodo}`).classList.add('active');
+            // Activate selected
+            event.target.classList.add('active');
+            document.getElementById(`ranking-${period}`).classList.add('active');
             
-            // Carregar dados específicos
-            if (periodo === 'geral') {
-                carregarTopTempos();
-            } else if (periodo === 'diario') {
-                carregarTopTemposDiario();
+            // Load data
+            if (period === 'geral') {
+                loadRankingGeral();
+            } else if (period === 'diario') {
+                updateToday();
+                loadRankingDiario();
             }
         }
 
-        // Atualizar data de hoje
-        function atualizarDataHoje() {
-            const hoje = new Date();
-            const dataFormatada = hoje.toLocaleDateString('pt-BR');
-            document.getElementById('data-hoje').textContent = dataFormatada;
+        // Update today's date
+        function updateToday() {
+            const today = new Date();
+            const isoDate = today.toISOString().split('T')[0];
+            
+            // Definir data de hoje no input
+            document.getElementById('seletorData').value = isoDate;
         }
 
-        // Carregar estatísticas gerais
-        async function carregarStats() {
+        // Carregar ranking para hoje
+        function carregarHoje() {
+            console.log('🏠 Carregando dados de hoje...');
+            updateToday();
+            document.getElementById('periodoAtual').textContent = '📅 Hoje';
+            loadRankingDiario();
+        }
+
+        // Carregar ranking por data selecionada
+        function carregarRankingPorData() {
+            const dataInput = document.getElementById('seletorData');
+            const dataSelecionada = dataInput.value;
+            
+            if (!dataSelecionada) {
+                alert('⚠️ Por favor, selecione uma data válida!');
+                return;
+            }
+            
+            console.log('📅 Carregando ranking para data:', dataSelecionada);
+            
+            // Update the period display
+            const [ano, mes, dia] = dataSelecionada.split('-');
+            const dataFormatada = `${dia}/${mes}/${ano}`;
+            document.getElementById('periodoAtual').textContent = `📅 Data: ${dataFormatada}`;
+            
+            // Carregar dados da data específica
+            loadRankingPorData(dataSelecionada);
+        }
+
+        // Load stats
+        async function loadStats() {
             try {
+                console.log('📊 Carregando estatísticas...');
                 const response = await fetch('/api/admin/stats');
                 const data = await response.json();
                 
@@ -209,22 +293,26 @@
                     throw new Error(data.erro);
                 }
                 
-                document.getElementById('totalUsuarios').textContent = data.total_usuarios;
-                document.getElementById('totalRegistros').textContent = data.total_registros;
-                document.getElementById('tmaGeral').textContent = data.tma_geral + 's';
-                document.getElementById('tmrGeral').textContent = data.tmr_geral + 's';
+                document.getElementById('totalUsuarios').textContent = data.total_usuarios || '0';
+                document.getElementById('totalRegistros').textContent = data.total_registros || '0';
+                document.getElementById('tmaGeral').textContent = (data.tma_geral || '0') + 's';
+                document.getElementById('tmrGeral').textContent = (data.tmr_geral || '0') + 's';
                 
                 currentData.stats = data;
+                console.log('✅ Estatísticas carregadas');
                 
             } catch (error) {
-                console.error('Erro ao carregar estatísticas:', error);
-                document.getElementById('statsGrid').innerHTML = 
-                    '<div class="error">Erro ao carregar estatísticas: ' + error.message + '</div>';
+                console.error('❌ Erro ao carregar estatísticas:', error);
+                // Valores padrão se houver erro
+                document.getElementById('totalUsuarios').textContent = '0';
+                document.getElementById('totalRegistros').textContent = '0';
+                document.getElementById('tmaGeral').textContent = '0s';
+                document.getElementById('tmrGeral').textContent = '0s';
             }
         }
 
-        // Carregar usuários
-        async function carregarUsuarios() {
+        // Load users
+        async function loadUsers() {
             try {
                 const response = await fetch('/api/admin/usuarios');
                 const data = await response.json();
@@ -237,80 +325,39 @@
                 container.innerHTML = '';
                 
                 data.usuarios.forEach(usuario => {
-                    const userCard = document.createElement('div');
-                    userCard.className = 'user-card';
-                    userCard.innerHTML = `
-                        <div class="user-header">
-                            <div class="user-info">
-                                <strong>${usuario.nome}</strong>
-                                ${usuario.is_admin ? '<span class="user-badge">ADMIN</span>' : ''}
-                                <span class="user-badge">${usuario.total_registros} registros</span>
+                    const userDiv = document.createElement('div');
+                    userDiv.style.cssText = `
+                        background: white;
+                        border-radius: 8px;
+                        padding: 20px;
+                        margin-bottom: 15px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    `;
+                    userDiv.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="font-size: 1.1rem; color: #1f2937;">${usuario.nome}</strong>
+                                ${usuario.is_admin ? '<span style="background: #6366f1; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; margin-left: 10px;">ADMIN</span>' : ''}
+                                <div style="color: #6b7280; margin-top: 5px;">${usuario.total_registros} registros</div>
                             </div>
-                            <div class="user-actions">
-                                <button class="btn-info" onclick="toggleUserDetails(${usuario.id})">
-                                    <span id="toggle-${usuario.id}">Ver Detalhes</span>
-                                </button>
-                                ${!usuario.is_admin ? `<button class="btn-danger" onclick="deletarUsuario(${usuario.id}, '${usuario.nome}')">Deletar</button>` : ''}
+                            <div style="display: flex; gap: 10px;">
+                                <button onclick="viewUserRecords(${usuario.id}, '${usuario.nome}')" style="background: #4f46e5; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">📊 Ver Lançamentos</button>
+                                ${!usuario.is_admin ? `<button onclick="deleteUser(${usuario.id}, '${usuario.nome}')" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Deletar</button>` : ''}
                             </div>
-                        </div>
-                        <div id="details-${usuario.id}" style="display: none; padding: 15px;">
-                            ${usuario.registros && usuario.registros.length > 0 ? `
-                                <table class="registros-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Data</th>
-                                            <th>Operador</th>
-                                            <th>PDV</th>
-                                            <th>TMA</th>
-                                            <th>TMR</th>
-                                            <th>Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${usuario.registros.map(registro => `
-                                            <tr id="registro-${registro.id}">
-                                                <td>${registro.data_registro}</td>
-                                                <td>${registro.nome_operador}</td>
-                                                <td>${registro.numero_pdv}</td>
-                                                <td>${registro.tma}s</td>
-                                                <td>${registro.tmr}s</td>
-                                                <td>
-                                                    <button class="btn-danger" onclick="deletarRegistro(${registro.id})">Deletar</button>
-                                                </td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            ` : '<p>Nenhum registro encontrado.</p>'}
                         </div>
                     `;
-                    container.appendChild(userCard);
+                    container.appendChild(userDiv);
                 });
                 
             } catch (error) {
                 console.error('Erro ao carregar usuários:', error);
-                document.getElementById('usuariosList').innerHTML = 
-                    '<div class="error">Erro ao carregar usuários: ' + error.message + '</div>';
+                document.getElementById('usuariosList').innerHTML = '<div class="admin-error">Erro ao carregar usuários: ' + error.message + '</div>';
             }
         }
 
-        // Toggle detalhes do usuário
-        function toggleUserDetails(userId) {
-            const details = document.getElementById(`details-${userId}`);
-            const toggle = document.getElementById(`toggle-${userId}`);
-            
-            if (details.style.display === 'none') {
-                details.style.display = 'block';
-                toggle.textContent = 'Ocultar Detalhes';
-            } else {
-                details.style.display = 'none';
-                toggle.textContent = 'Ver Detalhes';
-            }
-        }
-
-        // Deletar usuário
-        async function deletarUsuario(userId, userName) {
-            if (!confirm(`Tem certeza que deseja deletar o usuário "${userName}" e todos seus registros?`)) {
+        // Delete user
+        async function deleteUser(userId, userName) {
+            if (!confirm(`Tem certeza que deseja deletar o usuário "${userName}"?`)) {
                 return;
             }
             
@@ -326,22 +373,120 @@
                 }
                 
                 alert(data.message);
-                await carregarUsuarios();
-                await carregarStats();
+                await loadUsers();
+                await loadStats();
                 
             } catch (error) {
                 alert('Erro ao deletar usuário: ' + error.message);
             }
         }
 
-        // Deletar registro
-        async function deletarRegistro(registroId) {
-            if (!confirm('Tem certeza que deseja deletar este registro?')) {
+        // Visualizar registros de um usuário
+        async function viewUserRecords(userId, userName) {
+            try {
+                const response = await fetch(`/api/registros/${userId}`);
+                const data = await response.json();
+                
+                if (data.erro) {
+                    throw new Error(data.erro);
+                }
+                
+                showUserRecordsModal(data, userName, userId);
+                
+            } catch (error) {
+                alert('Erro ao carregar registros: ' + error.message);
+            }
+        }
+
+        // Mostrar modal com registros do usuário
+        function showUserRecordsModal(registros, userName, userId) {
+            let modalHtml = `
+            <div id="userRecordsModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: flex; justify-content: center; align-items: center;">
+                <div style="background: white; width: 90%; max-width: 800px; max-height: 80vh; border-radius: 10px; overflow: hidden;">
+                    <div style="background: #4f46e5; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin: 0;">📊 Registros de ${userName}</h3>
+                        <button onclick="closeModal()" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+                    </div>
+                    <div style="padding: 20px; overflow-y: auto; max-height: 60vh;">
+            `;
+            
+            if (!registros || registros.length === 0) {
+                modalHtml += '<p style="text-align: center; color: #6b7280; font-size: 1.1rem; padding: 40px;">📭 Nenhum registro encontrado</p>';
+            } else {
+                modalHtml += `
+                <div style="margin-bottom: 20px; color: #6b7280;">
+                    Total de registros: <strong>${registros.length}</strong>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                                <th style="padding: 12px; text-align: left;">Data/Hora</th>
+                                <th style="padding: 12px; text-align: left;">Operador</th>
+                                <th style="padding: 12px; text-align: center;">PDV</th>
+                                <th style="padding: 12px; text-align: center;">TMA</th>
+                                <th style="padding: 12px; text-align: center;">TMR</th>
+                                <th style="padding: 12px; text-align: center;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                registros.forEach((registro, index) => {
+                    const dataHora = new Date(registro.data_registro).toLocaleDateString('pt-BR');
+                    const tmaClass = registro.tma <= 92 ? 'color: #059669; font-weight: bold;' : 'color: #dc2626;';
+                    const tmrClass = registro.tmr <= 172 ? 'color: #059669; font-weight: bold;' : 'color: #dc2626;';
+                    const bgColor = index % 2 === 0 ? '#f8fafc' : 'white';
+                    
+                    modalHtml += `
+                        <tr style="background: ${bgColor}; border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px;">${dataHora}</td>
+                            <td style="padding: 10px;">${registro.nome_operador}</td>
+                            <td style="padding: 10px; text-align: center;">${registro.numero_pdv}</td>
+                            <td style="padding: 10px; text-align: center; ${tmaClass}">${registro.tma}s</td>
+                            <td style="padding: 10px; text-align: center; ${tmrClass}">${registro.tmr}s</td>
+                            <td style="padding: 10px; text-align: center;">
+                                <button onclick="deleteRecord(${registro.id}, '${userName}', ${userId})" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">🗑️ Deletar</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                modalHtml += `
+                        </tbody>
+                    </table>
+                </div>
+                `;
+            }
+            
+            modalHtml += `
+                    </div>
+                    <div style="background: #f8fafc; padding: 15px; text-align: center; border-top: 1px solid #e2e8f0;">
+                        <button onclick="closeModal()" style="background: #6b7280; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">Fechar</button>
+                    </div>
+                </div>
+            </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        // Fechar modal
+        function closeModal() {
+            const modal = document.getElementById('userRecordsModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Deletar registro específico
+        async function deleteRecord(recordId, userName, userId) {
+            if (!confirm(`Tem certeza que deseja deletar este registro?`)) {
                 return;
             }
             
             try {
-                const response = await fetch(`/api/admin/registros/${registroId}`, {
+                const response = await fetch(`/api/admin/registros/${recordId}`, {
                     method: 'DELETE'
                 });
                 
@@ -351,302 +496,25 @@
                     throw new Error(data.erro);
                 }
                 
-                // Remover linha da tabela
-                const row = document.getElementById(`registro-${registroId}`);
-                if (row) {
-                    row.remove();
-                }
+                alert('✅ Registro deletado com sucesso!');
                 
-                await carregarStats();
-                alert(data.message);
+                // Fechar modal atual e reabrir com dados atualizados
+                closeModal();
+                setTimeout(() => {
+                    viewUserRecords(userId, userName);
+                }, 100);
                 
-            } catch (error) {
-                alert('Erro ao deletar registro: ' + error.message);
-            }
-        }
-
-        // Carregar gráficos
-        async function carregarGraficos() {
-            try {
-                const response = await fetch('/api/admin/graficos');
-                const data = await response.json();
-                
-                if (data.erro) {
-                    throw new Error(data.erro);
-                }
-                
-                // Gráfico PDV
-                criarGraficoPDV(data.pdv_data);
-                
-                // Gráfico Temporal
-                criarGraficoTemporal(data.evolucao_temporal);
-                
-                // Gráfico Operadores
-                criarGraficoOperadores(data.operadores_data);
+                // Atualizar estatísticas
+                await loadStats();
+                await loadUsers();
                 
             } catch (error) {
-                console.error('Erro ao carregar gráficos:', error);
+                alert('❌ Erro ao deletar registro: ' + error.message);
             }
         }
 
-        // Criar gráfico por PDV
-        function criarGraficoPDV(data) {
-            const ctx = document.getElementById('chartPDV').getContext('2d');
-            
-            if (charts.pdv) {
-                charts.pdv.destroy();
-            }
-            
-            charts.pdv = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.map(d => `PDV ${d.pdv}`),
-                    datasets: [
-                        {
-                            label: 'TMA Médio (s)',
-                            data: data.map(d => d.tma_medio),
-                            backgroundColor: 'rgba(9, 9, 121, 0.8)',
-                            borderColor: 'rgba(9, 9, 121, 1)',
-                            borderWidth: 2,
-                            borderRadius: 4
-                        },
-                        {
-                            label: 'TMR Médio (s)',
-                            data: data.map(d => d.tmr_medio),
-                            backgroundColor: 'rgba(46, 56, 59, 0.8)',
-                            borderColor: 'rgba(46, 56, 59, 1)',
-                            borderWidth: 2,
-                            borderRadius: 4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: 'rgba(2, 0, 36, 1)',
-                                font: {
-                                    weight: 600
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Tempo (segundos)',
-                                color: 'rgba(2, 0, 36, 1)',
-                                font: {
-                                    weight: 600
-                                }
-                            },
-                            ticks: {
-                                color: 'rgba(46, 56, 59, 1)'
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                color: 'rgba(46, 56, 59, 1)'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Criar gráfico temporal
-        function criarGraficoTemporal(data) {
-            const ctx = document.getElementById('chartTemporal').getContext('2d');
-            
-            if (charts.temporal) {
-                charts.temporal.destroy();
-            }
-            
-            charts.temporal = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.map(d => d.data),
-                    datasets: [
-                        {
-                            label: 'TMA Médio (s)',
-                            data: data.map(d => d.tma_medio),
-                            borderColor: 'rgba(9, 9, 121, 1)',
-                            backgroundColor: 'rgba(9, 9, 121, 0.1)',
-                            tension: 0.4,
-                            borderWidth: 3,
-                            pointBackgroundColor: 'rgba(9, 9, 121, 1)',
-                            pointBorderColor: 'rgba(255, 255, 255, 1)',
-                            pointBorderWidth: 2,
-                            pointRadius: 6
-                        },
-                        {
-                            label: 'TMR Médio (s)',
-                            data: data.map(d => d.tmr_medio),
-                            borderColor: 'rgba(46, 56, 59, 1)',
-                            backgroundColor: 'rgba(46, 56, 59, 0.1)',
-                            tension: 0.4,
-                            borderWidth: 3,
-                            pointBackgroundColor: 'rgba(46, 56, 59, 1)',
-                            pointBorderColor: 'rgba(255, 255, 255, 1)',
-                            pointBorderWidth: 2,
-                            pointRadius: 6
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: 'rgba(2, 0, 36, 1)',
-                                font: {
-                                    weight: 600
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Tempo (segundos)',
-                                color: 'rgba(2, 0, 36, 1)',
-                                font: {
-                                    weight: 600
-                                }
-                            },
-                            ticks: {
-                                color: 'rgba(46, 56, 59, 1)'
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                color: 'rgba(46, 56, 59, 1)'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Criar gráfico de operadores
-        function criarGraficoOperadores(data) {
-            const ctx = document.getElementById('chartOperadores').getContext('2d');
-            
-            if (charts.operadores) {
-                charts.operadores.destroy();
-            }
-            
-            charts.operadores = new Chart(ctx, {
-                type: 'horizontalBar',
-                data: {
-                    labels: data.map(d => d.operador),
-                    datasets: [{
-                        label: 'Total de Registros',
-                        data: data.map(d => d.total_registros),
-                        backgroundColor: 'rgba(9, 9, 121, 0.8)',
-                        borderColor: 'rgba(9, 9, 121, 1)',
-                        borderWidth: 2,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: 'rgba(2, 0, 36, 1)',
-                                font: {
-                                    weight: 600
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Número de Registros',
-                                color: 'rgba(2, 0, 36, 1)',
-                                font: {
-                                    weight: 600
-                                }
-                            },
-                            ticks: {
-                                color: 'rgba(46, 56, 59, 1)'
-                            }
-                        },
-                        y: {
-                            ticks: {
-                                color: 'rgba(46, 56, 59, 1)'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Carregar relatórios
-        function carregarRelatorios() {
-            if (!currentData.stats) return;
-            
-            // Relatório por PDV
-            const relatorioPDV = document.getElementById('relatorioPDV');
-            relatorioPDV.innerHTML = `
-                <table class="registros-table">
-                    <thead>
-                        <tr>
-                            <th>PDV</th>
-                            <th>Total de Registros</th>
-                            <th>TMA Médio</th>
-                            <th>TMR Médio</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${currentData.stats.registros_por_pdv.map(pdv => `
-                            <tr>
-                                <td>PDV ${pdv.pdv}</td>
-                                <td>${pdv.total}</td>
-                                <td>${pdv.tma_medio}s</td>
-                                <td>${pdv.tmr_medio}s</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-            
-            // Relatório de usuários
-            const relatorioUsuarios = document.getElementById('relatorioUsuarios');
-            relatorioUsuarios.innerHTML = `
-                <table class="registros-table">
-                    <thead>
-                        <tr>
-                            <th>Usuário</th>
-                            <th>Total de Registros</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${currentData.stats.usuarios_top.map(user => `
-                            <tr>
-                                <td>${user.nome}</td>
-                                <td>${user.total_registros}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-        }
-
-        // Carregar Top 10 de melhores e piores tempos
-        async function carregarTopTempos() {
+        // Load Ranking Geral
+        async function loadRankingGeral() {
             try {
                 const response = await fetch('/api/admin/top-tempos');
                 const data = await response.json();
@@ -654,172 +522,179 @@
                 if (data.erro) {
                     throw new Error(data.erro);
                 }
+
+                console.log('🔍 DEBUG - Ranking Geral:', data);
                 
-                const metaTMA = data.meta_tma;
-                const metaTMR = data.meta_tmr;
-                
-                // Melhores TMA
-                const melhoresTMA = document.getElementById('melhoresTMA');
-                melhoresTMA.innerHTML = `
-                    <div class="meta-info">
-                        <small>🎯 Meta TMA: ${metaTMA} segundos</small>
-                    </div>
-                    <table class="top-table">
-                        <thead>
-                            <tr>
-                                <th>Pos.</th>
-                                <th>Operador</th>
-                                <th>PDV</th>
-                                <th>TMA</th>
-                                <th>Data</th>
-                                <th>Usuário</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.melhores_tma.map((registro, index) => `
-                                <tr class="top-melhor">
-                                    <td class="pos-numero">${index + 1}°</td>
-                                    <td>${registro.nome_operador}</td>
-                                    <td>PDV ${registro.numero_pdv}</td>
-                                    <td class="tempo-destaque ${registro.dentro_meta ? 'tempo-meta' : ''}">${registro.tma}s</td>
-                                    <td>${registro.data_registro}</td>
-                                    <td>${registro.usuario_nome}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-                
-                // Piores TMA (apenas tempos acima da meta)
-                const pioresTMA = document.getElementById('pioresTMA');
-                if (data.piores_tma.length === 0) {
-                    pioresTMA.innerHTML = `
-                        <div class="meta-info">
-                            <small>🎯 Meta TMA: ${metaTMA} segundos</small>
-                        </div>
-                        <div class="sem-dados">
-                            <p>🎉 Excelente! Nenhum tempo TMA está acima da meta!</p>
-                            <p>Todos os operadores estão dentro da meta de ${metaTMA} segundos.</p>
-                        </div>
-                    `;
+                // Melhores TMA (≤92s)
+                const melhoresTMAGeral = document.getElementById('melhoresTMAGeral');
+                if (data.melhores_tma.length === 0) {
+                    melhoresTMAGeral.innerHTML = '<div class="empty-ranking">📭 Nenhum TMA ≤ 1:32 encontrado</div>';
                 } else {
-                    pioresTMA.innerHTML = `
-                        <div class="meta-info">
-                            <small>🎯 Meta TMA: ${metaTMA} segundos (apenas tempos acima da meta)</small>
-                        </div>
-                        <table class="top-table">
-                            <thead>
-                                <tr>
-                                    <th>Pos.</th>
-                                    <th>Operador</th>
-                                    <th>PDV</th>
-                                    <th>TMA</th>
-                                    <th>Data</th>
-                                    <th>Usuário</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${data.piores_tma.map((registro, index) => `
-                                    <tr class="top-pior">
-                                        <td class="pos-numero">${index + 1}°</td>
-                                        <td>${registro.nome_operador}</td>
-                                        <td>PDV ${registro.numero_pdv}</td>
-                                        <td class="tempo-destaque tempo-fora-meta">${registro.tma}s</td>
-                                        <td>${registro.data_registro}</td>
-                                        <td>${registro.usuario_nome}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    `;
+                    melhoresTMAGeral.innerHTML = createRankingTable(
+                        data.melhores_tma.map((r, i) => ({
+                            pos: i + 1,
+                            operador: r.nome_operador,
+                            pdv: r.numero_pdv,
+                            tempo: `${r.tma}s`,
+                            data: r.data_registro,
+                            usuario: r.usuario_nome,
+                            tipo: 'good'
+                        }))
+                    );
                 }
                 
-                // Melhores TMR
-                const melhoresTMR = document.getElementById('melhoresTMR');
-                melhoresTMR.innerHTML = `
-                    <div class="meta-info">
-                        <small>🎯 Meta TMR: ${metaTMR} segundos</small>
-                    </div>
-                    <table class="top-table">
-                        <thead>
-                            <tr>
-                                <th>Pos.</th>
-                                <th>Operador</th>
-                                <th>PDV</th>
-                                <th>TMR</th>
-                                <th>Data</th>
-                                <th>Usuário</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.melhores_tmr.map((registro, index) => `
-                                <tr class="top-melhor">
-                                    <td class="pos-numero">${index + 1}°</td>
-                                    <td>${registro.nome_operador}</td>
-                                    <td>PDV ${registro.numero_pdv}</td>
-                                    <td class="tempo-destaque ${registro.dentro_meta ? 'tempo-meta' : ''}">${registro.tmr}s</td>
-                                    <td>${registro.data_registro}</td>
-                                    <td>${registro.usuario_nome}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-                
-                // Piores TMR (apenas tempos acima da meta)
-                const pioresTMR = document.getElementById('pioresTMR');
-                if (data.piores_tmr.length === 0) {
-                    pioresTMR.innerHTML = `
-                        <div class="meta-info">
-                            <small>🎯 Meta TMR: ${metaTMR} segundos</small>
-                        </div>
-                        <div class="sem-dados">
-                            <p>🎉 Excelente! Nenhum tempo TMR está acima da meta!</p>
-                            <p>Todos os operadores estão dentro da meta de ${metaTMR} segundos.</p>
-                        </div>
-                    `;
+                // Piores TMA (>92s)
+                const pioresTMAGeral = document.getElementById('pioresTMAGeral');
+                if (data.piores_tma.length === 0) {
+                    pioresTMAGeral.innerHTML = '<div class="excellent-ranking">🎉 Excelente! Todos os TMA estão dentro da meta!</div>';
                 } else {
-                    pioresTMR.innerHTML = `
-                        <div class="meta-info">
-                            <small>🎯 Meta TMR: ${metaTMR} segundos (apenas tempos acima da meta)</small>
-                        </div>
-                        <table class="top-table">
-                            <thead>
-                                <tr>
-                                    <th>Pos.</th>
-                                    <th>Operador</th>
-                                    <th>PDV</th>
-                                    <th>TMR</th>
-                                    <th>Data</th>
-                                    <th>Usuário</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${data.piores_tmr.map((registro, index) => `
-                                    <tr class="top-pior">
-                                        <td class="pos-numero">${index + 1}°</td>
-                                        <td>${registro.nome_operador}</td>
-                                        <td>PDV ${registro.numero_pdv}</td>
-                                        <td class="tempo-destaque tempo-fora-meta">${registro.tmr}s</td>
-                                        <td>${registro.data_registro}</td>
-                                        <td>${registro.usuario_nome}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    `;
+                    pioresTMAGeral.innerHTML = createRankingTable(
+                        data.piores_tma.map((r, i) => ({
+                            pos: i + 1,
+                            operador: r.nome_operador,
+                            pdv: r.numero_pdv,
+                            tempo: `${r.tma}s`,
+                            data: r.data_registro,
+                            usuario: r.usuario_nome,
+                            tipo: 'bad'
+                        }))
+                    );
+                }
+                
+                // Melhores TMR (≤6s)
+                const melhoresTMRGeral = document.getElementById('melhoresTMRGeral');
+                if (data.melhores_tmr.length === 0) {
+                    melhoresTMRGeral.innerHTML = '<div class="empty-ranking">📭 Nenhum TMR ≤ 6s encontrado</div>';
+                } else {
+                    melhoresTMRGeral.innerHTML = createRankingTable(
+                        data.melhores_tmr.map((r, i) => ({
+                            pos: i + 1,
+                            operador: r.nome_operador,
+                            pdv: r.numero_pdv,
+                            tempo: `${r.tmr}s`,
+                            data: r.data_registro,
+                            usuario: r.usuario_nome,
+                            tipo: 'good'
+                        }))
+                    );
+                }
+                
+                // Piores TMR (>6s)
+                const pioresTMRGeral = document.getElementById('pioresTMRGeral');
+                if (data.piores_tmr.length === 0) {
+                    pioresTMRGeral.innerHTML = '<div class="excellent-ranking">🎉 Excelente! Todos os TMR estão dentro da meta!</div>';
+                } else {
+                    pioresTMRGeral.innerHTML = createRankingTable(
+                        data.piores_tmr.map((r, i) => ({
+                            pos: i + 1,
+                            operador: r.nome_operador,
+                            pdv: r.numero_pdv,
+                            tempo: `${r.tmr}s`,
+                            data: r.data_registro,
+                            usuario: r.usuario_nome,
+                            tipo: 'bad'
+                        }))
+                    );
                 }
                 
             } catch (error) {
-                console.error('Erro ao carregar Top 10:', error);
-                document.querySelectorAll('#top-tempos .loading').forEach(el => {
-                    el.innerHTML = '<div class="error">Erro ao carregar dados: ' + error.message + '</div>';
+                console.error('Erro ao carregar ranking geral:', error);
+                document.querySelectorAll('#ranking-geral .ranking-content').forEach(el => {
+                    el.innerHTML = '<div class="error-ranking">❌ Erro: ' + error.message + '</div>';
                 });
             }
         }
 
-        // Carregar Top 10 de melhores e piores tempos DIÁRIOS
-        async function carregarTopTemposDiario() {
+        // Load Ranking por Data Específica
+        async function loadRankingPorData(dataSelecionada) {
+            try {
+                const response = await fetch(`/api/admin/top-tempos-diario?data=${dataSelecionada}`);
+                const data = await response.json();
+                
+                if (data.erro) {
+                    throw new Error(data.erro);
+                }
+
+                console.log('🔍 DEBUG - Ranking por Data:', data);
+                console.log('🔍 DEBUG - Data consultada:', dataSelecionada);
+                
+                // Update day info
+                document.getElementById('totalRegistrosDia').textContent = data.total_registros_hoje;
+                
+                // Melhores TMA da Data (≤92s)
+                const melhoresTMAHoje = document.getElementById('melhoresTMAHoje');
+                if (!data.melhores_tma_hoje || data.melhores_tma_hoje.length === 0) {
+                    melhoresTMAHoje.innerHTML = '<div class="empty-ranking">📭 Nenhum TMA ≤ 1:32 nesta data</div>';
+                } else {
+                    const rankingData = data.melhores_tma_hoje.map((r, i) => ({
+                        pos: i + 1,
+                        operador: r.nome_operador,
+                        pdv: r.numero_pdv,
+                        tempo: `${r.tma}s`,
+                        usuario: r.usuario_nome,
+                        tipo: 'good'
+                    }));
+                    melhoresTMAHoje.innerHTML = createRankingTable(rankingData);
+                }
+                
+                // Piores TMA da Data (>92s)
+                const pioresTMAHoje = document.getElementById('pioresTMAHoje');
+                if (!data.piores_tma_hoje || data.piores_tma_hoje.length === 0) {
+                    pioresTMAHoje.innerHTML = '<div class="excellent-ranking">🎉 Nenhum TMA acima da meta nesta data!</div>';
+                } else {
+                    const rankingData = data.piores_tma_hoje.map((r, i) => ({
+                        pos: i + 1,
+                        operador: r.nome_operador,
+                        pdv: r.numero_pdv,
+                        tempo: `${r.tma}s`,
+                        usuario: r.usuario_nome,
+                        tipo: 'bad'
+                    }));
+                    pioresTMAHoje.innerHTML = createRankingTable(rankingData);
+                }
+                
+                // Melhores TMR da Data (≤6s)
+                const melhoresTMRHoje = document.getElementById('melhoresTMRHoje');
+                if (!data.melhores_tmr_hoje || data.melhores_tmr_hoje.length === 0) {
+                    melhoresTMRHoje.innerHTML = '<div class="empty-ranking">📭 Nenhum TMR ≤ 6s nesta data</div>';
+                } else {
+                    const rankingData = data.melhores_tmr_hoje.map((r, i) => ({
+                        pos: i + 1,
+                        operador: r.nome_operador,
+                        pdv: r.numero_pdv,
+                        tempo: `${r.tmr}s`,
+                        usuario: r.usuario_nome,
+                        tipo: 'good'
+                    }));
+                    melhoresTMRHoje.innerHTML = createRankingTable(rankingData);
+                }
+                
+                // Piores TMR da Data (>6s)
+                const pioresTMRHoje = document.getElementById('pioresTMRHoje');
+                if (!data.piores_tmr_hoje || data.piores_tmr_hoje.length === 0) {
+                    pioresTMRHoje.innerHTML = '<div class="excellent-ranking">🎉 Nenhum TMR acima da meta nesta data!</div>';
+                } else {
+                    const rankingData = data.piores_tmr_hoje.map((r, i) => ({
+                        pos: i + 1,
+                        operador: r.nome_operador,
+                        pdv: r.numero_pdv,
+                        tempo: `${r.tmr}s`,
+                        usuario: r.usuario_nome,
+                        tipo: 'bad'
+                    }));
+                    pioresTMRHoje.innerHTML = createRankingTable(rankingData);
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar ranking por data:', error);
+                document.querySelectorAll('#ranking-diario .ranking-content').forEach(el => {
+                    el.innerHTML = '<div class="error-ranking">❌ Erro: ' + error.message + '</div>';
+                });
+            }
+        }
+
+        // Load Ranking Diário
+        async function loadRankingDiario() {
             try {
                 const response = await fetch('/api/admin/top-tempos-diario');
                 const data = await response.json();
@@ -827,170 +702,268 @@
                 if (data.erro) {
                     throw new Error(data.erro);
                 }
+
+                console.log('🔍 DEBUG - Ranking Diário:', data);
+                console.log('🔍 DEBUG - Melhores TMA Hoje:', data.melhores_tma_hoje);
+                console.log('🔍 DEBUG - Piores TMA Hoje:', data.piores_tma_hoje);
+                console.log('🔍 DEBUG - Meta TMA:', data.meta_tma);
+                console.log('🔍 DEBUG - Total registros:', data.total_registros_hoje);
                 
-                const metaTMA = data.meta_tma;
-                const metaTMR = data.meta_tmr;
+                // Update day info
+                document.getElementById('totalRegistrosDia').textContent = data.total_registros_hoje;
                 
-                // Atualizar informações do dia
-                document.getElementById('data-hoje').textContent = data.data_consulta;
-                document.getElementById('total-hoje').textContent = data.total_registros_hoje;
-                
-                // Melhores TMA Hoje
+                // Melhores TMA Hoje (≤92s)
                 const melhoresTMAHoje = document.getElementById('melhoresTMAHoje');
-                melhoresTMAHoje.innerHTML = `
-                    <div class="meta-info">
-                        <small>🎯 Meta TMA: ${metaTMA} segundos</small>
-                    </div>
-                    ${data.melhores_tma_hoje.length === 0 ? 
-                        '<div class="sem-dados"><p>📭 Nenhum registro TMA encontrado para hoje</p></div>' :
-                        `<table class="top-table">
-                            <thead>
-                                <tr>
-                                    <th>Pos.</th>
-                                    <th>Operador</th>
-                                    <th>PDV</th>
-                                    <th>TMA</th>
-                                    <th>Usuário</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${data.melhores_tma_hoje.map((registro, index) => `
-                                    <tr class="top-melhor">
-                                        <td class="pos-numero">${index + 1}°</td>
-                                        <td>${registro.nome_operador}</td>
-                                        <td>PDV ${registro.numero_pdv}</td>
-                                        <td class="tempo-destaque ${registro.dentro_meta ? 'tempo-meta' : ''}">${registro.tma}s</td>
-                                        <td>${registro.usuario_nome}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>`
-                    }
-                `;
-                
-                // Piores TMA Hoje (apenas acima da meta)
-                const pioresTMAHoje = document.getElementById('pioresTMAHoje');
-                if (data.piores_tma_hoje.length === 0) {
-                    pioresTMAHoje.innerHTML = `
-                        <div class="meta-info">
-                            <small>🎯 Meta TMA: ${metaTMA} segundos</small>
-                        </div>
-                        <div class="sem-dados">
-                            <p>🎉 Excelente! Nenhum tempo TMA está acima da meta hoje!</p>
-                            <p>Todos os operadores de hoje estão dentro da meta de ${metaTMA} segundos.</p>
-                        </div>
-                    `;
+                if (!data.melhores_tma_hoje || data.melhores_tma_hoje.length === 0) {
+                    melhoresTMAHoje.innerHTML = '<div class="empty-ranking">📭 Nenhum TMA ≤ 1:32 hoje</div>';
                 } else {
-                    pioresTMAHoje.innerHTML = `
-                        <div class="meta-info">
-                            <small>🎯 Meta TMA: ${metaTMA} segundos (apenas tempos acima da meta)</small>
-                        </div>
-                        <table class="top-table">
-                            <thead>
-                                <tr>
-                                    <th>Pos.</th>
-                                    <th>Operador</th>
-                                    <th>PDV</th>
-                                    <th>TMA</th>
-                                    <th>Usuário</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${data.piores_tma_hoje.map((registro, index) => `
-                                    <tr class="top-pior">
-                                        <td class="pos-numero">${index + 1}°</td>
-                                        <td>${registro.nome_operador}</td>
-                                        <td>PDV ${registro.numero_pdv}</td>
-                                        <td class="tempo-destaque tempo-fora-meta">${registro.tma}s</td>
-                                        <td>${registro.usuario_nome}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    `;
+                    const rankingData = data.melhores_tma_hoje.map((r, i) => ({
+                        pos: i + 1,
+                        operador: r.nome_operador,
+                        pdv: r.numero_pdv,
+                        tempo: `${r.tma}s`,
+                        usuario: r.usuario_nome,
+                        tipo: 'good'
+                    }));
+                    melhoresTMAHoje.innerHTML = createRankingTable(rankingData);
                 }
                 
-                // Melhores TMR Hoje
-                const melhoresTMRHoje = document.getElementById('melhoresTMRHoje');
-                melhoresTMRHoje.innerHTML = `
-                    <div class="meta-info">
-                        <small>🎯 Meta TMR: ${metaTMR} segundos</small>
-                    </div>
-                    ${data.melhores_tmr_hoje.length === 0 ? 
-                        '<div class="sem-dados"><p>📭 Nenhum registro TMR encontrado para hoje</p></div>' :
-                        `<table class="top-table">
-                            <thead>
-                                <tr>
-                                    <th>Pos.</th>
-                                    <th>Operador</th>
-                                    <th>PDV</th>
-                                    <th>TMR</th>
-                                    <th>Usuário</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${data.melhores_tmr_hoje.map((registro, index) => `
-                                    <tr class="top-melhor">
-                                        <td class="pos-numero">${index + 1}°</td>
-                                        <td>${registro.nome_operador}</td>
-                                        <td>PDV ${registro.numero_pdv}</td>
-                                        <td class="tempo-destaque ${registro.dentro_meta ? 'tempo-meta' : ''}">${registro.tmr}s</td>
-                                        <td>${registro.usuario_nome}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>`
-                    }
-                `;
-                
-                // Piores TMR Hoje (apenas acima da meta)
-                const pioresTMRHoje = document.getElementById('pioresTMRHoje');
-                if (data.piores_tmr_hoje.length === 0) {
-                    pioresTMRHoje.innerHTML = `
-                        <div class="meta-info">
-                            <small>🎯 Meta TMR: ${metaTMR} segundos</small>
-                        </div>
-                        <div class="sem-dados">
-                            <p>🎉 Excelente! Nenhum tempo TMR está acima da meta hoje!</p>
-                            <p>Todos os operadores de hoje estão dentro da meta de ${metaTMR} segundos.</p>
-                        </div>
-                    `;
+                // Piores TMA Hoje (>92s)
+                const pioresTMAHoje = document.getElementById('pioresTMAHoje');
+                if (!data.piores_tma_hoje || data.piores_tma_hoje.length === 0) {
+                    pioresTMAHoje.innerHTML = '<div class="excellent-ranking">🎉 Nenhum TMA acima da meta hoje!</div>';
                 } else {
-                    pioresTMRHoje.innerHTML = `
-                        <div class="meta-info">
-                            <small>🎯 Meta TMR: ${metaTMR} segundos (apenas tempos acima da meta)</small>
-                        </div>
-                        <table class="top-table">
-                            <thead>
-                                <tr>
-                                    <th>Pos.</th>
-                                    <th>Operador</th>
-                                    <th>PDV</th>
-                                    <th>TMR</th>
-                                    <th>Usuário</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${data.piores_tmr_hoje.map((registro, index) => `
-                                    <tr class="top-pior">
-                                        <td class="pos-numero">${index + 1}°</td>
-                                        <td>${registro.nome_operador}</td>
-                                        <td>PDV ${registro.numero_pdv}</td>
-                                        <td class="tempo-destaque tempo-fora-meta">${registro.tmr}s</td>
-                                        <td>${registro.usuario_nome}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    `;
+                    const rankingData = data.piores_tma_hoje.map((r, i) => ({
+                        pos: i + 1,
+                        operador: r.nome_operador,
+                        pdv: r.numero_pdv,
+                        tempo: `${r.tma}s`,
+                        usuario: r.usuario_nome,
+                        tipo: 'bad'
+                    }));
+                    pioresTMAHoje.innerHTML = createRankingTable(rankingData);
+                }
+                
+                // Melhores TMR Hoje (≤6s)
+                const melhoresTMRHoje = document.getElementById('melhoresTMRHoje');
+                if (!data.melhores_tmr_hoje || data.melhores_tmr_hoje.length === 0) {
+                    melhoresTMRHoje.innerHTML = '<div class="empty-ranking">📭 Nenhum TMR ≤ 6s hoje</div>';
+                } else {
+                    const rankingData = data.melhores_tmr_hoje.map((r, i) => ({
+                        pos: i + 1,
+                        operador: r.nome_operador,
+                        pdv: r.numero_pdv,
+                        tempo: `${r.tmr}s`,
+                        usuario: r.usuario_nome,
+                        tipo: 'good'
+                    }));
+                    melhoresTMRHoje.innerHTML = createRankingTable(rankingData);
+                }
+                
+                // Piores TMR Hoje (>6s)
+                const pioresTMRHoje = document.getElementById('pioresTMRHoje');
+                if (!data.piores_tmr_hoje || data.piores_tmr_hoje.length === 0) {
+                    pioresTMRHoje.innerHTML = '<div class="excellent-ranking">🎉 Nenhum TMR acima da meta hoje!</div>';
+                } else {
+                    const rankingData = data.piores_tmr_hoje.map((r, i) => ({
+                        pos: i + 1,
+                        operador: r.nome_operador,
+                        pdv: r.numero_pdv,
+                        tempo: `${r.tmr}s`,
+                        usuario: r.usuario_nome,
+                        tipo: 'bad'
+                    }));
+                    pioresTMRHoje.innerHTML = createRankingTable(rankingData);
                 }
                 
             } catch (error) {
-                console.error('Erro ao carregar Top 10 diário:', error);
-                document.querySelectorAll('#top-diario .loading').forEach(el => {
-                    el.innerHTML = '<div class="error">Erro ao carregar dados: ' + error.message + '</div>';
+                console.error('Erro ao carregar ranking diário:', error);
+                document.querySelectorAll('#ranking-diario .ranking-content').forEach(el => {
+                    el.innerHTML = '<div class="error-ranking">❌ Erro: ' + error.message + '</div>';
                 });
             }
+        }
+
+        // Event listeners initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Admin page loaded - Initializing...');
+            
+            // Initialize date selector with today's date
+            updateToday();
+            
+            // Load initial data
+            init();
+            
+            // Date selector event listener
+            const dataInput = document.getElementById('seletorData');
+            if (dataInput) {
+                dataInput.addEventListener('change', carregarRankingPorData);
+                console.log('📅 Date selector listener added');
+            }
+            
+            // Today button event listener
+            const botaoHoje = document.getElementById('botaoHoje');
+            if (botaoHoje) {
+                botaoHoje.addEventListener('click', carregarHoje);
+                console.log('📅 Today button listener added');
+            }
+        });
+
+        // Create ranking table helper
+        function createRankingTable(rankings) {
+            console.log('🔍 createRankingTable chamada com:', rankings);
+            
+            if (rankings.length === 0) {
+                return '<div class="empty-ranking">📭 Nenhum registro encontrado</div>';
+            }
+            
+            const html = `
+                <div class="ranking-table">
+                    ${rankings.map(r => `
+                        <div class="ranking-row ${r.tipo}">
+                            <div class="ranking-pos">${r.pos}°</div>
+                            <div class="ranking-details">
+                                <div class="ranking-operador">${r.operador}</div>
+                                <div class="ranking-info">PDV ${r.pdv} • ${r.tempo}</div>
+                                ${r.data ? `<div class="ranking-date">${r.data}</div>` : ''}
+                                <div class="ranking-user">👤 ${r.usuario}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            console.log('🔍 HTML final criado:', html);
+            return html;
+        }
+
+        // Load reports
+        function loadReports() {
+            loadCharts();
+        }
+
+        let charts = {};
+
+        function loadCharts() {
+            const period = document.getElementById('reportPeriod').value;
+            const endDate = new Date().toISOString().split('T')[0];
+            const startDate = new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            
+            fetch(`/api/admin/chart-data?start=${startDate}&end=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.erro) throw new Error(data.erro);
+                    createTMAChart(data.tma_por_dia);
+                    createTMRChart(data.tmr_por_dia);
+                    createTMADonutChart(data.tma_distribution);
+                    createTMRDonutChart(data.tmr_distribution);
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar gráficos:', error);
+                    alert('Erro ao carregar gráficos: ' + error.message);
+                });
+        }
+
+        function createTMAChart(data) {
+            const ctx = document.getElementById('tmaChart').getContext('2d');
+            if (charts.tma) charts.tma.destroy();
+            
+            charts.tma = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => new Date(d.data).toLocaleDateString('pt-BR')),
+                    datasets: [{
+                        label: 'TMA Médio (s)',
+                        data: data.map(d => d.tma_medio),
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Meta (92s)',
+                        data: data.map(() => 92),
+                        borderColor: '#10b981',
+                        borderDash: [5, 5],
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function createTMRChart(data) {
+            const ctx = document.getElementById('tmrChart').getContext('2d');
+            if (charts.tmr) charts.tmr.destroy();
+            
+            charts.tmr = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => new Date(d.data).toLocaleDateString('pt-BR')),
+                    datasets: [{
+                        label: 'TMR Médio (s)',
+                        data: data.map(d => d.tmr_medio),
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Meta (6s)',
+                        data: data.map(() => 6),
+                        borderColor: '#10b981',
+                        borderDash: [5, 5],
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function createTMADonutChart(data) {
+            const ctx = document.getElementById('tmaDonutChart').getContext('2d');
+            if (charts.tmaDonut) charts.tmaDonut.destroy();
+            
+            charts.tmaDonut = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Dentro da Meta (≤ 92s)', 'Acima da Meta (> 92s)'],
+                    datasets: [{
+                        data: [data.dentro_meta, data.acima_meta],
+                        backgroundColor: ['#10b981', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function createTMRDonutChart(data) {
+            const ctx = document.getElementById('tmrDonutChart').getContext('2d');
+            if (charts.tmrDonut) charts.tmrDonut.destroy();
+            
+            charts.tmrDonut = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Dentro da Meta (≤ 6s)', 'Acima da Meta (> 6s)'],
+                    datasets: [{
+                        data: [data.dentro_meta, data.acima_meta],
+                        backgroundColor: ['#10b981', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
         }
 
         // Logout
@@ -1004,13 +977,21 @@
             }
         }
 
-        // Inicializar página
+        // Initialize
         async function init() {
-            await carregarStats();
-            await carregarUsuarios();
+            console.log('🚀 Iniciando admin...');
+            try {
+                await loadStats();
+                await loadUsers();
+                await loadRankingGeral();
+                updateToday();
+                console.log('✅ Inicialização completa');
+            } catch (error) {
+                console.error('❌ Erro na inicialização:', error);
+            }
         }
 
-        // Carregar dados ao iniciar
+        // Auto-load on page ready
         init();
     </script>
 </body>

@@ -1,0 +1,336 @@
+/* ===== ADMIN2 CSS - COMPLETAMENTE NOVO ===== */
+/* Versão 1.0 - CSS limpo e funcional */
+
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body e HTML */
+html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+body.admin2-page {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+    min-height: 100vh;
+    color: #1f2937;
+    line-height: 1.6;
+}
+
+/* Container */
+.admin2-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+.admin2-header {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 30px;
+    border-radius: 16px;
+    text-align: center;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.admin2-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 10px;
+}
+
+.admin2-header p {
+    color: #6b7280;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+}
+
+.admin2-logout-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.admin2-logout-btn:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+}
+
+/* Stats Cards */
+.admin2-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.admin2-stat-card {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.admin2-stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.admin2-stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #6366f1;
+    margin-bottom: 8px;
+}
+
+.admin2-stat-label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Navigation Tabs */
+.admin2-nav {
+    display: flex;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 6px;
+    margin-bottom: 30px;
+    backdrop-filter: blur(10px);
+}
+
+.admin2-nav-btn {
+    flex: 1;
+    padding: 15px 20px;
+    background: transparent;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.admin2-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.admin2-nav-btn.active {
+    background: rgba(255, 255, 255, 0.3);
+    font-weight: 600;
+}
+
+/* Content Sections */
+.admin2-content {
+    display: none;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.admin2-content.active {
+    display: block;
+}
+
+.admin2-content h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 25px;
+}
+
+/* Top 10 Specific */
+.admin2-top-nav {
+    display: flex;
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 25px;
+}
+
+.admin2-top-btn {
+    flex: 1;
+    padding: 12px 16px;
+    background: transparent;
+    color: #6b7280;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.admin2-top-btn:hover {
+    color: #1f2937;
+    background: #e5e7eb;
+}
+
+.admin2-top-btn.active {
+    background: #6366f1;
+    color: white;
+    font-weight: 600;
+}
+
+/* Rankings Grid */
+.admin2-rankings {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.admin2-ranking-section {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+}
+
+.admin2-ranking-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.admin2-ranking-title.best {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.admin2-ranking-title.worst {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+/* Tables */
+.admin2-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.admin2-table th {
+    background: #f1f5f9;
+    color: #374151;
+    font-weight: 600;
+    padding: 12px 10px;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.admin2-table td {
+    padding: 10px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.9rem;
+    color: #374151;
+}
+
+.admin2-table tr:hover {
+    background-color: #f9fafb;
+}
+
+.admin2-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Meta Info */
+.admin2-meta-info {
+    background: #e0e7ff;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    text-align: center;
+    border-left: 4px solid #6366f1;
+    font-size: 0.9rem;
+    color: #4338ca;
+}
+
+/* Empty State */
+.admin2-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6b7280;
+    font-style: italic;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 2px dashed #d1d5db;
+}
+
+/* Loading State */
+.admin2-loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* Error State */
+.admin2-error {
+    background: #fef2f2;
+    color: #dc2626;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #ef4444;
+    margin: 15px 0;
+}
+
+/* Adicionando classe para top content */
+.admin2-top-content {
+    display: none;
+}
+
+.admin2-top-content.active {
+    display: block;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .admin2-container {
+        padding: 15px;
+    }
+    
+    .admin2-header h1 {
+        font-size: 2rem;
+    }
+    
+    .admin2-nav {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .admin2-nav-btn {
+        flex: none;
+    }
+    
+    .admin2-rankings {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin2-table {
+        font-size: 0.8rem;
+    }
+    
+    .admin2-table th,
+    .admin2-table td {
+        padding: 8px 6px;
+    }
+}

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin2 - Sistema TMA/TMR</title>
+    <link rel="stylesheet" href="css/admin2.css?v=1.0">
+</head>
+<body class="admin2-page">
+    <div class="admin2-container">
+        <!-- Header -->
+        <div class="admin2-header">
+            <h1>🛠️ Painel Administrativo v2</h1>
+            <p>Sistema TMA/TMR - Gestão Completa</p>
+            <button class="admin2-logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="admin2-stats">
+            <div class="admin2-stat-card">
+                <div class="admin2-stat-number" id="totalUsuarios2">-</div>
+                <div class="admin2-stat-label">Total de Usuários</div>
+            </div>
+            <div class="admin2-stat-card">
+                <div class="admin2-stat-number" id="totalRegistros2">-</div>
+                <div class="admin2-stat-label">Total de Registros</div>
+            </div>
+            <div class="admin2-stat-card">
+                <div class="admin2-stat-number" id="tmaGeral2">-</div>
+                <div class="admin2-stat-label">TMA Médio Geral</div>
+            </div>
+            <div class="admin2-stat-card">
+                <div class="admin2-stat-number" id="tmrGeral2">-</div>
+                <div class="admin2-stat-label">TMR Médio Geral</div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="admin2-nav">
+            <button class="admin2-nav-btn active" onclick="showSection('usuarios')">👥 Usuários</button>
+            <button class="admin2-nav-btn" onclick="showSection('top-tempos')">🏆 Top 10</button>
+            <button class="admin2-nav-btn" onclick="showSection('relatorios')">📋 Relatórios</button>
+        </div>
+
+        <!-- Usuários Section -->
+        <div id="usuarios" class="admin2-content active">
+            <h2>Gerenciamento de Usuários</h2>
+            <div id="usuariosList2" class="admin2-loading">Carregando usuários...</div>
+        </div>
+
+        <!-- Top 10 Section -->
+        <div id="top-tempos" class="admin2-content">
+            <h2>🏆 Top 10 - Melhores e Piores Tempos</h2>
+            
+            <!-- Top Navigation -->
+            <div class="admin2-top-nav">
+                <button class="admin2-top-btn active" onclick="showTopPeriod('geral')">📊 Geral</button>
+                <button class="admin2-top-btn" onclick="showTopPeriod('diario')">📅 Diário</button>
+            </div>
+            
+            <!-- Top Geral -->
+            <div id="top-geral2" class="admin2-top-content active">
+                <h3>📊 Ranking Geral de Todos os Tempos</h3>
+                <div class="admin2-rankings">
+                    <!-- Melhores TMA -->
+                    <div class="admin2-ranking-section">
+                        <div class="admin2-ranking-title best">✅ Top 10 Melhores TMA</div>
+                        <div id="melhoresTMA2" class="admin2-loading">Carregando...</div>
+                    </div>
+                    
+                    <!-- Piores TMA -->
+                    <div class="admin2-ranking-section">
+                        <div class="admin2-ranking-title worst">⚠️ Top 10 Piores TMA</div>
+                        <div id="pioresTMA2" class="admin2-loading">Carregando...</div>
+                    </div>
+                    
+                    <!-- Melhores TMR -->
+                    <div class="admin2-ranking-section">
+                        <div class="admin2-ranking-title best">✅ Top 10 Melhores TMR</div>
+                        <div id="melhoresTMR2" class="admin2-loading">Carregando...</div>
+                    </div>
+                    
+                    <!-- Piores TMR -->
+                    <div class="admin2-ranking-section">
+                        <div class="admin2-ranking-title worst">⚠️ Top 10 Piores TMR</div>
+                        <div id="pioresTMR2" class="admin2-loading">Carregando...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Top Diário -->
+            <div id="top-diario2" class="admin2-top-content">
+                <h3>📅 Ranking do Dia - <span id="dataHoje2">11/07/2025</span></h3>
+                <p>Total de registros hoje: <span id="totalHoje2">-</span></p>
+                
+                <div class="admin2-rankings">
+                    <!-- Melhores TMA Hoje -->
+                    <div class="admin2-ranking-section">
+                        <div class="admin2-ranking-title best">✅ Melhores TMA Hoje</div>
+                        <div id="melhoresTMAHoje2" class="admin2-loading">Carregando...</div>
+                    </div>
+                    
+                    <!-- Piores TMA Hoje -->
+                    <div class="admin2-ranking-section">
+                        <div class="admin2-ranking-title worst">⚠️ Piores TMA Hoje</div>
+                        <div id="pioresTMAHoje2" class="admin2-loading">Carregando...</div>
+                    </div>
+                    
+                    <!-- Melhores TMR Hoje -->
+                    <div class="admin2-ranking-section">
+                        <div class="admin2-ranking-title best">✅ Melhores TMR Hoje</div>
+                        <div id="melhoresTMRHoje2" class="admin2-loading">Carregando...</div>
+                    </div>
+                    
+                    <!-- Piores TMR Hoje -->
+                    <div class="admin2-ranking-section">
+                        <div class="admin2-ranking-title worst">⚠️ Piores TMR Hoje</div>
+                        <div id="pioresTMRHoje2" class="admin2-loading">Carregando...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Relatórios Section -->
+        <div id="relatorios" class="admin2-content">
+            <h2>📋 Relatórios Detalhados</h2>
+            <div id="relatoriosContent2" class="admin2-loading">Carregando relatórios...</div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentData2 = {};
+
+        // Show section
+        function showSection(sectionName) {
+            // Remove active from all nav buttons
+            document.querySelectorAll('.admin2-nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.admin2-content').forEach(content => content.classList.remove('active'));
+            
+            // Activate selected
+            event.target.classList.add('active');
+            document.getElementById(sectionName).classList.add('active');
+            
+            // Load specific data
+            if (sectionName === 'top-tempos') {
+                loadTopTempos();
+                updateToday();
+            } else if (sectionName === 'relatorios') {
+                loadReports();
+            }
+        }
+
+        // Show top period
+        function showTopPeriod(period) {
+            // Remove active from all top buttons
+            document.querySelectorAll('.admin2-top-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.admin2-top-content').forEach(content => content.classList.remove('active'));
+            
+            // Activate selected
+            event.target.classList.add('active');
+            document.getElementById(`top-${period}2`).classList.add('active');
+            
+            // Load data
+            if (period === 'geral') {
+                loadTopTempos();
+            } else if (period === 'diario') {
+                loadTopTemposDaily();
+            }
+        }
+
+        // Update today's date
+        function updateToday() {
+            const today = new Date();
+            const formatted = today.toLocaleDateString('pt-BR');
+            document.getElementById('dataHoje2').textContent = formatted;
+        }
+
+        // Load stats
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/admin/stats');
+                const data = await response.json();
+                
+                if (data.erro) {
+                    throw new Error(data.erro);
+                }
+                
+                document.getElementById('totalUsuarios2').textContent = data.total_usuarios;
+                document.getElementById('totalRegistros2').textContent = data.total_registros;
+                document.getElementById('tmaGeral2').textContent = data.tma_geral + 's';
+                document.getElementById('tmrGeral2').textContent = data.tmr_geral + 's';
+                
+                currentData2.stats = data;
+                
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+            }
+        }
+
+        // Load users
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/admin/usuarios');
+                const data = await response.json();
+                
+                if (data.erro) {
+                    throw new Error(data.erro);
+                }
+                
+                const container = document.getElementById('usuariosList2');
+                container.innerHTML = '';
+                
+                data.usuarios.forEach(usuario => {
+                    const userDiv = document.createElement('div');
+                    userDiv.style.cssText = `
+                        background: white;
+                        border-radius: 8px;
+                        padding: 20px;
+                        margin-bottom: 15px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    `;
+                    userDiv.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="font-size: 1.1rem; color: #1f2937;">${usuario.nome}</strong>
+                                ${usuario.is_admin ? '<span style="background: #6366f1; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; margin-left: 10px;">ADMIN</span>' : ''}
+                                <div style="color: #6b7280; margin-top: 5px;">${usuario.total_registros} registros</div>
+                            </div>
+                            ${!usuario.is_admin ? `<button onclick="deleteUser(${usuario.id}, '${usuario.nome}')" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Deletar</button>` : ''}
+                        </div>
+                    `;
+                    container.appendChild(userDiv);
+                });
+                
+            } catch (error) {
+                console.error('Erro ao carregar usuários:', error);
+                document.getElementById('usuariosList2').innerHTML = '<div class="admin2-error">Erro ao carregar usuários: ' + error.message + '</div>';
+            }
+        }
+
+        // Delete user
+        async function deleteUser(userId, userName) {
+            if (!confirm(`Tem certeza que deseja deletar o usuário "${userName}"?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/usuarios/${userId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.erro) {
+                    throw new Error(data.erro);
+                }
+                
+                alert(data.message);
+                await loadUsers();
+                await loadStats();
+                
+            } catch (error) {
+                alert('Erro ao deletar usuário: ' + error.message);
+            }
+        }
+
+        // Load Top Tempos (General)
+        async function loadTopTempos() {
+            try {
+                const response = await fetch('/api/admin/top-tempos');
+                const data = await response.json();
+                
+                if (data.erro) {
+                    throw new Error(data.erro);
+                }
+
+                console.log('🔍 DEBUG - Top Tempos Geral:', data);
+                
+                const metaTMA = data.meta_tma;
+                const metaTMR = data.meta_tmr;
+                
+                // Melhores TMA
+                const melhoresTMA = document.getElementById('melhoresTMA2');
+                melhoresTMA.innerHTML = `
+                    <div class="admin2-meta-info">Meta TMA: ${metaTMA} segundos</div>
+                    ${data.melhores_tma.length === 0 ? 
+                        '<div class="admin2-empty">Nenhum registro encontrado</div>' :
+                        createTable(['Pos.', 'Operador', 'PDV', 'TMA', 'Data', 'Usuário'], 
+                            data.melhores_tma.map((r, i) => [
+                                `${i+1}°`,
+                                r.nome_operador,
+                                `PDV ${r.numero_pdv}`,
+                                `${r.tma}s`,
+                                r.data_registro,
+                                r.usuario_nome
+                            ])
+                        )
+                    }
+                `;
+                
+                // Piores TMA
+                const pioresTMA = document.getElementById('pioresTMA2');
+                if (data.piores_tma.length === 0) {
+                    pioresTMA.innerHTML = `
+                        <div class="admin2-meta-info">Meta TMA: ${metaTMA} segundos</div>
+                        <div class="admin2-empty">🎉 Excelente! Nenhum tempo TMA acima da meta!</div>
+                    `;
+                } else {
+                    pioresTMA.innerHTML = `
+                        <div class="admin2-meta-info">Meta TMA: ${metaTMA} segundos (acima da meta)</div>
+                        ${createTable(['Pos.', 'Operador', 'PDV', 'TMA', 'Data', 'Usuário'], 
+                            data.piores_tma.map((r, i) => [
+                                `${i+1}°`,
+                                r.nome_operador,
+                                `PDV ${r.numero_pdv}`,
+                                `${r.tma}s`,
+                                r.data_registro,
+                                r.usuario_nome
+                            ])
+                        )}
+                    `;
+                }
+                
+                // Melhores TMR
+                const melhoresTMR = document.getElementById('melhoresTMR2');
+                melhoresTMR.innerHTML = `
+                    <div class="admin2-meta-info">Meta TMR: ${metaTMR} segundos</div>
+                    ${data.melhores_tmr.length === 0 ? 
+                        '<div class="admin2-empty">Nenhum registro encontrado</div>' :
+                        createTable(['Pos.', 'Operador', 'PDV', 'TMR', 'Data', 'Usuário'], 
+                            data.melhores_tmr.map((r, i) => [
+                                `${i+1}°`,
+                                r.nome_operador,
+                                `PDV ${r.numero_pdv}`,
+                                `${r.tmr}s`,
+                                r.data_registro,
+                                r.usuario_nome
+                            ])
+                        )
+                    }
+                `;
+                
+                // Piores TMR
+                const pioresTMR = document.getElementById('pioresTMR2');
+                if (data.piores_tmr.length === 0) {
+                    pioresTMR.innerHTML = `
+                        <div class="admin2-meta-info">Meta TMR: ${metaTMR} segundos</div>
+                        <div class="admin2-empty">🎉 Excelente! Nenhum tempo TMR acima da meta!</div>
+                    `;
+                } else {
+                    pioresTMR.innerHTML = `
+                        <div class="admin2-meta-info">Meta TMR: ${metaTMR} segundos (acima da meta)</div>
+                        ${createTable(['Pos.', 'Operador', 'PDV', 'TMR', 'Data', 'Usuário'], 
+                            data.piores_tmr.map((r, i) => [
+                                `${i+1}°`,
+                                r.nome_operador,
+                                `PDV ${r.numero_pdv}`,
+                                `${r.tmr}s`,
+                                r.data_registro,
+                                r.usuario_nome
+                            ])
+                        )}
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar Top 10:', error);
+                document.querySelectorAll('#top-geral2 .admin2-loading').forEach(el => {
+                    el.innerHTML = '<div class="admin2-error">Erro: ' + error.message + '</div>';
+                });
+            }
+        }
+
+        // Load Top Tempos Daily
+        async function loadTopTemposDaily() {
+            try {
+                const response = await fetch('/api/admin/top-tempos-diario');
+                const data = await response.json();
+                
+                if (data.erro) {
+                    throw new Error(data.erro);
+                }
+
+                console.log('🔍 DEBUG - Top Tempos Diário:', data);
+                
+                const metaTMA = data.meta_tma;
+                const metaTMR = data.meta_tmr;
+                
+                // Update day info
+                document.getElementById('dataHoje2').textContent = data.data_consulta;
+                document.getElementById('totalHoje2').textContent = data.total_registros_hoje;
+                
+                // Melhores TMA Hoje
+                const melhoresTMAHoje = document.getElementById('melhoresTMAHoje2');
+                melhoresTMAHoje.innerHTML = `
+                    <div class="admin2-meta-info">Meta TMA: ${metaTMA} segundos (dentro da meta)</div>
+                    ${data.melhores_tma_hoje.length === 0 ? 
+                        '<div class="admin2-empty">Nenhum registro TMA hoje</div>' :
+                        createTable(['Pos.', 'Operador', 'PDV', 'TMA', 'Usuário'], 
+                            data.melhores_tma_hoje.map((r, i) => [
+                                `${i+1}°`,
+                                r.nome_operador,
+                                `PDV ${r.numero_pdv}`,
+                                `${r.tma}s`,
+                                r.usuario_nome
+                            ])
+                        )
+                    }
+                `;
+                
+                // Piores TMA Hoje
+                const pioresTMAHoje = document.getElementById('pioresTMAHoje2');
+                if (data.piores_tma_hoje.length === 0) {
+                    pioresTMAHoje.innerHTML = `
+                        <div class="admin2-meta-info">Meta TMA: ${metaTMA} segundos</div>
+                        <div class="admin2-empty">🎉 Nenhum tempo TMA acima da meta hoje!</div>
+                    `;
+                } else {
+                    pioresTMAHoje.innerHTML = `
+                        <div class="admin2-meta-info">Meta TMA: ${metaTMA} segundos (acima da meta)</div>
+                        ${createTable(['Pos.', 'Operador', 'PDV', 'TMA', 'Usuário'], 
+                            data.piores_tma_hoje.map((r, i) => [
+                                `${i+1}°`,
+                                r.nome_operador,
+                                `PDV ${r.numero_pdv}`,
+                                `${r.tma}s`,
+                                r.usuario_nome
+                            ])
+                        )}
+                    `;
+                }
+                
+                // Melhores TMR Hoje
+                const melhoresTMRHoje = document.getElementById('melhoresTMRHoje2');
+                melhoresTMRHoje.innerHTML = `
+                    <div class="admin2-meta-info">Meta TMR: ${metaTMR} segundos (dentro da meta)</div>
+                    ${data.melhores_tmr_hoje.length === 0 ? 
+                        '<div class="admin2-empty">Nenhum registro TMR hoje</div>' :
+                        createTable(['Pos.', 'Operador', 'PDV', 'TMR', 'Usuário'], 
+                            data.melhores_tmr_hoje.map((r, i) => [
+                                `${i+1}°`,
+                                r.nome_operador,
+                                `PDV ${r.numero_pdv}`,
+                                `${r.tmr}s`,
+                                r.usuario_nome
+                            ])
+                        )
+                    }
+                `;
+                
+                // Piores TMR Hoje
+                const pioresTMRHoje = document.getElementById('pioresTMRHoje2');
+                if (data.piores_tmr_hoje.length === 0) {
+                    pioresTMRHoje.innerHTML = `
+                        <div class="admin2-meta-info">Meta TMR: ${metaTMR} segundos</div>
+                        <div class="admin2-empty">🎉 Nenhum tempo TMR acima da meta hoje!</div>
+                    `;
+                } else {
+                    pioresTMRHoje.innerHTML = `
+                        <div class="admin2-meta-info">Meta TMR: ${metaTMR} segundos (acima da meta)</div>
+                        ${createTable(['Pos.', 'Operador', 'PDV', 'TMR', 'Usuário'], 
+                            data.piores_tmr_hoje.map((r, i) => [
+                                `${i+1}°`,
+                                r.nome_operador,
+                                `PDV ${r.numero_pdv}`,
+                                `${r.tmr}s`,
+                                r.usuario_nome
+                            ])
+                        )}
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar Top 10 diário:', error);
+                document.querySelectorAll('#top-diario2 .admin2-loading').forEach(el => {
+                    el.innerHTML = '<div class="admin2-error">Erro: ' + error.message + '</div>';
+                });
+            }
+        }
+
+        // Create table helper
+        function createTable(headers, rows) {
+            return `
+                <table class="admin2-table">
+                    <thead>
+                        <tr>
+                            ${headers.map(h => `<th>${h}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(row => `
+                            <tr>
+                                ${row.map(cell => `<td>${cell}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Load reports
+        function loadReports() {
+            document.getElementById('relatoriosContent2').innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #6b7280;">
+                    📋 Relatórios em desenvolvimento...
+                </div>
+            `;
+        }
+
+        // Logout
+        async function logout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Erro no logout:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        // Initialize
+        async function init() {
+            await loadStats();
+            await loadUsers();
+            updateToday();
+        }
+
+        // Auto-load on page ready
+        init();
+    </script>
+</body>
+</html>
