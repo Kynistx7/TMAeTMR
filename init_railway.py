@@ -24,8 +24,9 @@ def wait_for_database():
             
             # Configurar contexto da aplicação
             with app.app_context():
-                # Tentar conectar ao banco
-                db.engine.execute('SELECT 1')
+                # Tentar conectar ao banco (método atualizado)
+                with db.engine.connect() as conn:
+                    conn.execute(db.text('SELECT 1'))
                 print("✅ Banco de dados disponível!")
                 return True
                 
