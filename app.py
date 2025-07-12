@@ -29,6 +29,12 @@ CORS(app, resources={
 # Prioridade absoluta para Railway DATABASE_URL
 database_url = os.environ.get('DATABASE_URL')
 
+# Tentar outras variáveis de banco se DATABASE_URL não existir
+if not database_url:
+    database_url = os.environ.get('POSTGRES_URL')
+if not database_url:
+    database_url = os.environ.get('DATABASE_PRIVATE_URL')
+
 print(f"🔍 DEBUG - DATABASE_URL: {database_url[:50] if database_url else 'NÃO ENCONTRADA'}")
 print(f"🔍 DEBUG - RAILWAY_ENVIRONMENT: {os.environ.get('RAILWAY_ENVIRONMENT')}")
 print(f"🔍 DEBUG - SECRET_KEY existe: {bool(os.environ.get('SECRET_KEY'))}")
@@ -37,7 +43,10 @@ print(f"🔍 DEBUG - SECRET_KEY existe: {bool(os.environ.get('SECRET_KEY'))}")
 env_vars = [k for k in os.environ.keys() if k.startswith(('DATABASE', 'POSTGRES', 'RAILWAY'))]
 print(f"🔍 DEBUG - Variáveis relacionadas: {env_vars}")
 
-if database_url:
+# FORÇAR Railway se detectado (mesmo sem DATABASE_URL)
+is_railway = os.environ.get('RAILWAY_ENVIRONMENT') or any('railway' in str(v).lower() for v in os.environ.values())
+
+if database_url and database_url.strip():
     # Railway/Produção - usar DATABASE_URL fornecida
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
@@ -46,14 +55,13 @@ if database_url:
     print(f"📊 Banco de dados: PostgreSQL (produção)")
     print(f"🔗 URL do banco: {database_url[:50]}...")
     
-elif os.environ.get('RAILWAY_ENVIRONMENT'):
+elif is_railway:
     # Se estamos no Railway mas DATABASE_URL não existe (erro de configuração)
     print("❌ ERRO: Railway detectado mas DATABASE_URL não encontrada!")
     print("🔧 Solução: Adicione PostgreSQL ao projeto Railway")
     print("🔧 Ou conecte o serviço PostgreSQL à aplicação")
-    # NÃO falhar - usar SQLite temporariamente
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///temp_railway.db'
-    print("⚠️ Usando SQLite temporário até PostgreSQL ser conectado")
+    # FALHAR claramente para forçar configuração
+    raise Exception("DATABASE_URL obrigatória no Railway! Conecte PostgreSQL à aplicação.")
     
 else:
     # Desenvolvimento local - tentar PostgreSQL local ou SQLite fallback
