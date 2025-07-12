@@ -970,49 +970,10 @@ def admin_top_tempos_diario():
         return jsonify({"erro": str(e)}), 500
 
 # Rota específica para healthcheck do Railway
-@app.route("/health")
+@app.route("/health") 
 def health_check():
-    """Endpoint de healthcheck para Railway"""
-    try:
-        # Informações básicas sempre disponíveis
-        response_data = {
-            "status": "healthy",
-            "service": "TMA/TMR System",
-            "timestamp": datetime.now().isoformat(),
-            "environment": "railway" if os.environ.get('RAILWAY_ENVIRONMENT') else "local"
-        }
-        
-        # Testar conexão com banco de dados apenas se configurado
-        try:
-            with app.app_context():
-                # Teste simples de query com timeout
-                with db.engine.connect() as conn:
-                    conn.execute(db.text("SELECT 1"))
-                response_data["database"] = "connected"
-                response_data["database_type"] = "postgresql" if "postgresql" in app.config['SQLALCHEMY_DATABASE_URI'] else "sqlite"
-        except Exception as db_error:
-            # Se banco falhar, ainda retorna healthy mas com aviso
-            response_data["database"] = "disconnected"
-            response_data["database_error"] = str(db_error)[:100]  # Limitar tamanho do erro
-            
-            # No Railway, dar mais flexibilidade no início
-            if os.environ.get('RAILWAY_ENVIRONMENT'):
-                # Só falha se for erro crítico mesmo
-                if "connection" in str(db_error).lower() and "refused" in str(db_error).lower():
-                    response_data["status"] = "unhealthy"
-                    return jsonify(response_data), 500
-                else:
-                    # Outros erros ainda permitem que o serviço suba
-                    response_data["status"] = "starting"
-        
-        return jsonify(response_data), 200
-        
-    except Exception as e:
-        return jsonify({
-            "status": "unhealthy",
-            "error": str(e)[:200],  # Limitar tamanho
-            "timestamp": datetime.now().isoformat()
-        }), 500
+    """Endpoint simples de healthcheck"""
+    return {"status": "ok"}, 200
 
 # Rota para diagnostico completo (apenas para desenvolvimento/debug)
 @app.route("/debug")
@@ -1063,35 +1024,34 @@ def debug_info():
 def init_database_tables():
     """Inicializa tabelas automaticamente se necessário"""
     try:
+        print("🔧 Verificando e inicializando banco de dados...")
         with app.app_context():
-            # Verificar se as tabelas existem
-            from sqlalchemy import inspect
-            inspector = inspect(db.engine)
-            tables = inspector.get_table_names()
+            # Sempre criar as tabelas (safe - não apaga dados existentes)
+            db.create_all()
+            print("✅ Tabelas verificadas/criadas")
             
-            if not tables or 'user' not in tables:
-                print("🔧 Criando tabelas automaticamente...")
-                db.create_all()
+            # Verificar se existe admin
+            admin_user = User.query.filter_by(is_admin=True).first()
+            if not admin_user:
+                print("👤 Criando usuário admin...")
+                admin = User(
+                    nome='admin',
+                    senha_hash=hash_senha('admin123'),
+                    is_admin=True
+                )
+                db.session.add(admin)
+                db.session.commit()
+                print("✅ Admin criado: login=admin, senha=admin123")
+            else:
+                print("✅ Usuário admin já existe")
                 
-                # Criar admin se não existir
-                admin_user = User.query.filter_by(is_admin=True).first()
-                if not admin_user:
-                    print("👤 Criando usuário admin...")
-                    admin = User(
-                        nome='admin',
-                        senha_hash=hash_senha('admin123'),
-                        is_admin=True
-                    )
-                    db.session.add(admin)
-                    db.session.commit()
-                    print("✅ Admin criado: login=admin, senha=admin123")
-                
-            print("✅ Banco de dados verificado e inicializado")
     except Exception as e:
-        print(f"⚠️ Erro na inicialização automática: {e}")
+        print(f"⚠️ Erro na inicialização: {e}")
+        # Não falhar o app por causa disso
 
-# Inicializar automaticamente se estiver no Railway
+# SEMPRE inicializar no Railway
 if os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('DATABASE_URL'):
+    print("🚂 Ambiente Railway detectado - inicializando...")
     init_database_tables()
 
 if __name__ == "__main__":
