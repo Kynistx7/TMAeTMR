@@ -74,7 +74,7 @@ async function carregarRegistros() {
       
       // Formatear data para exibição (DD/MM/YYYY)
       const dataFormatada = op.data_registro ? 
-        new Date(op.data_registro + 'T00:00:00').toLocaleDateString('pt-BR') : 
+        op.data_registro.split('-').reverse().join('/') : 
         'N/A';
       
       const linha = document.createElement('tr');

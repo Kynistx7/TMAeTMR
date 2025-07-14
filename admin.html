@@ -443,7 +443,7 @@
                 `;
                 
                 registros.forEach((registro, index) => {
-                    const dataHora = new Date(registro.data_registro).toLocaleDateString('pt-BR');
+                    const dataHora = registro.data_registro.split('-').reverse().join('/');
                     const tmaClass = registro.tma <= 1.32 ? 'color: #059669; font-weight: bold;' : 'color: #dc2626;';
                     const tmrClass = registro.tmr <= 172 ? 'color: #059669; font-weight: bold;' : 'color: #dc2626;';
                     const bgColor = index % 2 === 0 ? '#f8fafc' : 'white';
@@ -857,13 +857,9 @@
         function formatDate(dateStr) {
             if (!dateStr) return '';
             try {
-                const date = new Date(dateStr);
-                if (isNaN(date.getTime())) return dateStr; // Fallback para formato original
-                return date.toLocaleDateString('pt-BR', { 
-                    day: '2-digit', 
-                    month: '2-digit',
-                    year: '2-digit'
-                });
+                // Simples conversão de YYYY-MM-DD para DD/MM/YY
+                const [ano, mes, dia] = dateStr.split('-');
+                return `${dia}/${mes}/${ano.slice(2)}`;
             } catch (e) {
                 return dateStr; // Fallback em caso de erro
             }
@@ -903,7 +899,7 @@
             charts.tma = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: data.map(d => new Date(d.data).toLocaleDateString('pt-BR')),
+                    labels: data.map(d => d.data.split('-').reverse().join('/')),
                     datasets: [{
                         label: 'TMA Médio (min)',
                         data: data.map(d => d.tma_medio),
@@ -934,7 +930,7 @@
             charts.tmr = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: data.map(d => new Date(d.data).toLocaleDateString('pt-BR')),
+                    labels: data.map(d => d.data.split('-').reverse().join('/')),
                     datasets: [{
                         label: 'TMR Médio (s)',
                         data: data.map(d => d.tmr_medio),
