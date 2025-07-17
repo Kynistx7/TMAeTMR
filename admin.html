@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="css/admin.css?v=2.1">
     <link rel="stylesheet" href="css/admin-alert.css?v=1.1">
     <link rel="stylesheet" href="css/ranking-compact.css?v=1.1">
+    <link rel="stylesheet" href="css/operador-search.css?v=1.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/script.js?v=1.2"></script>
 </head>
@@ -53,6 +54,10 @@
             <p class="secao-descricao">Este painel mostra operadores que precisam de atenção especial com base na análise automática de tempos.</p>
             
             <div class="controles-alerta">
+                <div class="pesquisa-operador">
+                    <label for="pesquisa-nome-operador">🔍 Buscar por nome:</label>
+                    <input type="text" id="pesquisa-nome-operador" placeholder="Digite o nome do operador">
+                </div>
                 <div class="filtros-alerta">
                     <label for="filtro-criticidade">📊 Filtrar por nível:</label>
                     <select id="filtro-criticidade">
@@ -1114,5 +1119,39 @@
             }, 1000);
         });
     </script>
+    
+    <!-- Modal para exibir todos os registros de um operador -->
+    <div id="modal-registros" class="modal-overlay" style="display: none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modal-titulo">Registros do Operador</h3>
+                <button class="modal-close-btn" onclick="fecharModalRegistros()">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div id="operador-estatisticas" class="operador-estatisticas">
+                    <!-- Estatísticas serão preenchidas dinamicamente -->
+                </div>
+                <div class="registros-tabela-container">
+                    <table class="registros-tabela">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>TMA</th>
+                                <th>TMR</th>
+                                <th>Conexão</th>
+                                <th>Chamadas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-registros-corpo">
+                            <!-- Registros serão preenchidos dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-close-btn-footer" onclick="fecharModalRegistros()">Fechar</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

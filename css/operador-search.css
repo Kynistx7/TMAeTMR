@@ -1,0 +1,228 @@
+/* Estilos para pesquisa de operadores e modal de registros */
+
+/* Campo de pesquisa de operador */
+.pesquisa-operador {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pesquisa-operador input {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background-color: white;
+  font-size: 0.95em;
+  min-width: 250px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s;
+}
+
+.pesquisa-operador input:focus {
+  outline: none;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
+}
+
+/* Botão de ver registros */
+.ver-registros-btn {
+  background-color: #f8f9fa;
+  color: #495057;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 15px;
+  width: 100%;
+  text-align: center;
+}
+
+.ver-registros-btn:hover {
+  background-color: #e9ecef;
+  border-color: #ced4da;
+}
+
+.card-operador-footer {
+  margin-top: 10px;
+}
+
+/* Modal de registros */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #212529;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6c757d;
+}
+
+.modal-close-btn:hover {
+  color: #343a40;
+}
+
+.modal-content {
+  padding: 20px;
+  overflow-y: auto;
+  max-height: calc(90vh - 130px);
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modal-close-btn-footer {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-weight: 500;
+}
+
+.modal-close-btn-footer:hover {
+  background-color: #5a6268;
+}
+
+/* Tabela de registros */
+.registros-tabela-container {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.registros-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.registros-tabela th, 
+.registros-tabela td {
+  padding: 10px;
+  border-bottom: 1px solid #e9ecef;
+  text-align: left;
+}
+
+.registros-tabela th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+}
+
+.registros-tabela tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.registros-tabela td.dentro-meta {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.registros-tabela td.fora-meta {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+/* Estatísticas do operador */
+.operador-estatisticas {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.estat-card {
+  flex: 1;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 15px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.estat-titulo {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-bottom: 5px;
+}
+
+.estat-valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 5px 0;
+}
+
+.estat-valor.dentro-meta {
+  color: #28a745;
+}
+
+.estat-valor.fora-meta {
+  color: #dc3545;
+}
+
+.estat-info {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .operador-estatisticas {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .pesquisa-operador {
+    width: 100%;
+  }
+  
+  .pesquisa-operador input {
+    width: 100%;
+  }
+}

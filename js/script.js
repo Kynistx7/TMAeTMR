@@ -17,6 +17,12 @@ const tabela = document.getElementById('tabela');
 const form = document.getElementById('form');
 const limparBtn = document.getElementById('limpar-registros');
 
+// Variáveis globais
+let ultimosPontosGraficoTMA = [];
+let ultimosPontosGraficoTMR = [];
+let operadoresProblematicos = [];
+let registrosAdmin = []; // Armazenar registros para uso nas funções de pesquisa
+
 // Utilidades de tempo
 function timeToHMS(timeStr) {
   const parts = timeStr.split(':');
@@ -241,6 +247,35 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Dar um pequeno delay para garantir que a página carregou completamente
       setTimeout(() => {
         carregarRegistrosAdmin();
+        
+        // Configurar event listener para o campo de pesquisa de operadores
+        const campoPesquisa = document.getElementById('pesquisa-nome-operador');
+        if (campoPesquisa) {
+          console.log('Campo de pesquisa de operadores encontrado, configurando eventos');
+          
+          // Event listener para pesquisa em tempo real (com debounce)
+          let timeoutId;
+          campoPesquisa.addEventListener('input', function() {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+              const termoPesquisa = this.value.trim();
+              console.log('Pesquisando operadores por:', termoPesquisa);
+              filtrarOperadoresPorNome(termoPesquisa);
+            }, 300); // 300ms de debounce
+          });
+          
+          // Event listener para tecla Enter
+          campoPesquisa.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              const termoPesquisa = this.value.trim();
+              console.log('Pesquisa por Enter:', termoPesquisa);
+              filtrarOperadoresPorNome(termoPesquisa);
+            }
+          });
+        } else {
+          console.error('Campo de pesquisa de operadores não encontrado');
+        }
       }, 500);
     } else {
       console.log('Usuário não é admin, não carregando dados administrativos');
@@ -274,6 +309,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             card.style.display = 'none';
           }
         });
+      }
+    });
+  }
+  
+  // Configurar o campo de pesquisa por nome de operador
+  const pesquisaNomeOperador = document.getElementById('pesquisa-nome-operador');
+  if (pesquisaNomeOperador) {
+    console.log('Configurando campo de pesquisa por nome de operador...');
+    
+    // Pesquisar ao pressionar Enter
+    pesquisaNomeOperador.addEventListener('keyup', function(event) {
+      if (event.key === 'Enter') {
+        const termo = this.value.trim();
+        console.log('Pesquisando operador:', termo);
+        filtrarOperadoresPorNome(termo);
+      }
+    });
+    
+    // Limpar a pesquisa quando o campo ficar vazio
+    pesquisaNomeOperador.addEventListener('input', function() {
+      if (this.value.trim() === '') {
+        console.log('Campo de pesquisa vazio, mostrando todos os operadores');
+        filtrarOperadoresPorNome('');
       }
     });
   }
@@ -387,6 +445,11 @@ async function carregarRegistrosAdmin() {
     
     const registros = await res.json();
     
+    // Armazenar registros globalmente para uso nas funções de pesquisa
+    console.log('Registros carregados:', registros.length);
+    window.registrosAdmin = registros; // Garantir acesso global
+    registrosAdmin = registros;
+    
     if (registros.length === 0) {
       painelAlerta.innerHTML = '<div class="alerta-ok">Não há registros disponíveis para análise</div>';
       return [];
@@ -394,6 +457,12 @@ async function carregarRegistrosAdmin() {
     
     const operadoresProblematicos = analisarOperadoresProblematicos(registros);
     exibirOperadoresComProblemas(operadoresProblematicos);
+    
+    // Aplicar o filtro de pesquisa após carregar
+    const termoPesquisa = document.getElementById('pesquisa-nome-operador')?.value || '';
+    if (termoPesquisa) {
+      filtrarOperadoresPorNome(termoPesquisa);
+    }
     
     return registros;
   } catch (error) {
@@ -461,7 +530,8 @@ function analisarOperadoresProblematicos(registros) {
     // Adicionar apenas operadores com problemas significativos
     if (pontuacao >= 30) {
       operadoresProblematicos.push({
-        nome,
+        nome: nome,
+        nome_operador: nome, // Adicionar nome_operador para consistência
         mediaTMA: mediaTMA.toFixed(2),
         mediaTMR: mediaTMR.toFixed(2),
         percentualForaMetaTMA: percentualForaMetaTMA.toFixed(0),
@@ -535,6 +605,9 @@ function exibirOperadoresComProblemas(operadores) {
           <strong>📋 Ação recomendada:</strong>
           ${gerarRecomendacao(op)}
         </div>
+        <div class="card-operador-footer">
+          <button class="ver-registros-btn" onclick="verRegistrosOperador('${op.nome_operador}')">📊 Ver todos os registros</button>
+        </div>
       </div>
     `;
   });
@@ -607,4 +680,238 @@ function inicializarPainelAlerta() {
 // Adicionar evento para inicializar o painel quando a página admin for carregada
 if (window.location.pathname.includes('admin')) {
   window.addEventListener('load', inicializarPainelAlerta);
+}
+
+// Função para filtrar operadores pelo nome
+function filtrarOperadoresPorNome(termoPesquisa) {
+  const painelAlerta = document.getElementById('painel-operadores-alerta');
+  if (!painelAlerta || !termoPesquisa) return;
+  
+  termoPesquisa = termoPesquisa.toLowerCase().trim();
+  
+  // Se a pesquisa estiver vazia, exibir todos os operadores problemáticos novamente
+  if (termoPesquisa === '') {
+    exibirOperadoresComProblemas(operadoresProblematicos);
+    return;
+  }
+  
+  // Obter todos os operadores únicos dos registros
+  const todosOperadores = [...new Set(registrosAdmin.map(reg => reg.nome_operador))];
+  
+  // Filtrar operadores que correspondem ao termo de pesquisa
+  const operadoresFiltrados = todosOperadores
+    .filter(nome => nome && nome.toLowerCase().includes(termoPesquisa))
+    .map(nome => {
+      // Obter registros deste operador
+      const registrosOperador = registrosAdmin.filter(reg => reg.nome_operador === nome);
+      
+      // Calcular métricas
+      const tmas = registrosOperador.map(reg => parseFloat(reg.tma));
+      const tmrs = registrosOperador.map(reg => parseFloat(reg.tmr));
+      
+      const mediaTMA = (tmas.reduce((sum, val) => sum + val, 0) / tmas.length).toFixed(2);
+      const mediaTMR = (tmrs.reduce((sum, val) => sum + val, 0) / tmrs.length).toFixed(2);
+      
+      const registrosForaMetaTMA = tmas.filter(tma => tma > META_TMA).length;
+      const registrosForaMetaTMR = tmrs.filter(tmr => tmr > META_TMR).length;
+      
+      const percentualForaMetaTMA = ((registrosForaMetaTMA / tmas.length) * 100).toFixed(1);
+      const percentualForaMetaTMR = ((registrosForaMetaTMR / tmrs.length) * 100).toFixed(1);
+      
+      // Calcular pontuação de criticidade (0-100)
+      const pontuacaoTMA = (mediaTMA > META_TMA) ? 
+        Math.min(100, (mediaTMA / META_TMA - 1) * 100) : 0;
+      const pontuacaoTMR = (mediaTMR > META_TMR) ? 
+        Math.min(100, (mediaTMR / META_TMR - 1) * 100) : 0;
+      const pontuacaoPercTMA = parseFloat(percentualForaMetaTMA);
+      const pontuacaoPercTMR = parseFloat(percentualForaMetaTMR);
+      
+      const pontuacao = (pontuacaoTMA * 0.3 + pontuacaoTMR * 0.3 + 
+                       pontuacaoPercTMA * 0.2 + pontuacaoPercTMR * 0.2).toFixed(1);
+      
+      // Verificar tendência de piora
+      const ultimosRegistros = registrosOperador
+        .sort((a, b) => {
+          if (!a.data_registro && !b.data_registro) return 0;
+          if (!a.data_registro) return 1;
+          if (!b.data_registro) return -1;
+          return new Date(b.data_registro) - new Date(a.data_registro);
+        })
+        .slice(0, Math.min(5, registrosOperador.length));
+      
+      const primeirosRegistros = registrosOperador
+        .sort((a, b) => {
+          if (!a.data_registro && !b.data_registro) return 0;
+          if (!a.data_registro) return 1;
+          if (!b.data_registro) return -1;
+          return new Date(a.data_registro) - new Date(b.data_registro);
+        })
+        .slice(0, Math.min(5, registrosOperador.length));
+      
+      const mediaTMARecente = ultimosRegistros.reduce((sum, reg) => sum + parseFloat(reg.tma), 0) / ultimosRegistros.length;
+      const mediaTMAInicial = primeirosRegistros.reduce((sum, reg) => sum + parseFloat(reg.tma), 0) / primeirosRegistros.length;
+      
+      const mediaTMRRecente = ultimosRegistros.reduce((sum, reg) => sum + parseFloat(reg.tmr), 0) / ultimosRegistros.length;
+      const mediaTMRInicial = primeirosRegistros.reduce((sum, reg) => sum + parseFloat(reg.tmr), 0) / primeirosRegistros.length;
+      
+      const tempiora = (mediaTMARecente > mediaTMAInicial * 1.1) || (mediaTMRRecente > mediaTMRInicial * 1.1);
+      
+      return {
+        nome: nome,
+        nome_operador: nome, // Adicionar nome_operador para consistência
+        mediaTMA,
+        mediaTMR,
+        percentualForaMetaTMA,
+        percentualForaMetaTMR,
+        pontuacao,
+        tempiora,
+        registros: registrosOperador
+      };
+    });
+  
+  // Ordenar operadores por pontuação (criticidade)
+  operadoresFiltrados.sort((a, b) => b.pontuacao - a.pontuacao);
+  
+  // Exibir operadores filtrados
+  exibirOperadoresComProblemas(operadoresFiltrados);
+}
+
+// Função para exibir todos os registros de um operador
+function verRegistrosOperador(nomeOperador) {
+  console.log('Função verRegistrosOperador chamada para:', nomeOperador);
+  console.log('registrosAdmin disponíveis:', registrosAdmin ? registrosAdmin.length : 0);
+  
+  if (!nomeOperador) {
+    console.error('Nome do operador não fornecido');
+    alert('Erro: Nome do operador não fornecido');
+    return;
+  }
+  
+  if (!registrosAdmin || registrosAdmin.length === 0) {
+    console.error('Não há registros disponíveis em registrosAdmin');
+    alert('Não há registros disponíveis para análise');
+    return;
+  }
+  
+  // Verificar a estrutura dos registros
+  console.log('Amostra de registros:', registrosAdmin.slice(0, 2));
+  
+  // Filtrar registros do operador
+  const registrosOperador = registrosAdmin.filter(reg => {
+    console.log(`Comparando '${reg.nome_operador}' com '${nomeOperador}'`);
+    return reg.nome_operador && nomeOperador && 
+           reg.nome_operador.toLowerCase() === nomeOperador.toLowerCase();
+  });
+  
+  console.log('Registros encontrados para o operador:', registrosOperador.length);
+  console.log('Exemplo de registro:', registrosOperador.length > 0 ? registrosOperador[0] : 'Nenhum registro');
+  
+  if (registrosOperador.length === 0) {
+    alert(`Não foram encontrados registros para o operador: ${nomeOperador}`);
+    return;
+  }
+  
+  // Ordenar registros por data (mais recentes primeiro)
+  registrosOperador.sort((a, b) => {
+    if (!a.data_registro && !b.data_registro) return 0;
+    if (!a.data_registro) return 1;
+    if (!b.data_registro) return -1;
+    return new Date(b.data_registro) - new Date(a.data_registro);
+  });
+  
+  // Calcular estatísticas
+  const tmas = registrosOperador.map(reg => parseFloat(reg.tma || 0));
+  const tmrs = registrosOperador.map(reg => parseFloat(reg.tmr || 0));
+  
+  // Verificar os campos dos registros
+  console.log("Exemplo de registro:", registrosOperador[0]);
+  
+  const mediaTMA = tmas.length > 0 ? (tmas.reduce((sum, val) => sum + val, 0) / tmas.length).toFixed(2) : "0.00";
+  const mediaTMR = tmrs.length > 0 ? (tmrs.reduce((sum, val) => sum + val, 0) / tmrs.length).toFixed(2) : "0.00";
+  const mediaTempoConexao = "N/A";
+  const mediaChamadas = "N/A";
+  
+  const totalRegistros = registrosOperador.length;
+  const registrosForaMetaTMA = tmas.filter(tma => tma > META_TMA).length;
+  const registrosForaMetaTMR = tmrs.filter(tmr => tmr > META_TMR).length;
+  
+  const percentualForaMetaTMA = totalRegistros > 0 ? ((registrosForaMetaTMA / totalRegistros) * 100).toFixed(1) : "0.0";
+  const percentualForaMetaTMR = totalRegistros > 0 ? ((registrosForaMetaTMR / totalRegistros) * 100).toFixed(1) : "0.0";
+  
+  // Preencher título do modal
+  document.getElementById('modal-titulo').textContent = `Registros de ${nomeOperador}`;
+  
+  // Preencher estatísticas
+  const estatisticasHTML = `
+    <div class="estat-card">
+      <div class="estat-titulo">TMA Média</div>
+      <div class="estat-valor ${parseFloat(mediaTMA) > META_TMA ? 'fora-meta' : 'dentro-meta'}">${mediaTMA} min/cupom</div>
+      <div class="estat-info">${percentualForaMetaTMA}% dos registros fora da meta</div>
+    </div>
+    <div class="estat-card">
+      <div class="estat-titulo">TMR Média</div>
+      <div class="estat-valor ${parseFloat(mediaTMR) > META_TMR ? 'fora-meta' : 'dentro-meta'}">${mediaTMR} seg/item</div>
+      <div class="estat-info">${percentualForaMetaTMR}% dos registros fora da meta</div>
+    </div>
+    <div class="estat-card">
+      <div class="estat-titulo">Total de Registros</div>
+      <div class="estat-valor">${totalRegistros}</div>
+      <div class="estat-info">Histórico completo</div>
+    </div>
+    <div class="estat-card">
+      <div class="estat-titulo">Último Registro</div>
+      <div class="estat-valor">${registrosOperador.length > 0 ? formatarDataSegura(registrosOperador[0].data_registro) : 'N/A'}</div>
+      <div class="estat-info">Data mais recente</div>
+    </div>
+  `;
+  
+  document.getElementById('operador-estatisticas').innerHTML = estatisticasHTML;
+  
+  // Preencher tabela de registros
+  let tabelaHTML = '';
+  
+  registrosOperador.forEach(reg => {
+    const data = formatarDataSegura(reg.data_registro);
+    const tma = reg.tma || 'N/A';
+    const tmr = reg.tmr || 'N/A';
+    
+    const tmaClass = parseFloat(tma) > META_TMA ? 'fora-meta' : 'dentro-meta';
+    const tmrClass = parseFloat(tmr) > META_TMR ? 'fora-meta' : 'dentro-meta';
+    
+    tabelaHTML += `
+      <tr>
+        <td>${data}</td>
+        <td class="${tmaClass}">${tma}</td>
+        <td class="${tmrClass}">${tmr}</td>
+        <td>${reg.tempo_conexao || 'N/A'}</td>
+        <td>${reg.chamadas || 'N/A'}</td>
+      </tr>
+    `;
+  });
+  
+  document.getElementById('tabela-registros-corpo').innerHTML = tabelaHTML;
+  
+  // Exibir modal
+  document.getElementById('modal-registros').style.display = 'flex';
+}
+
+// Função para fechar o modal de registros
+function fecharModalRegistros() {
+  document.getElementById('modal-registros').style.display = 'none';
+}
+
+// Função para formatar data de forma segura
+function formatarDataSegura(dataStr) {
+  if (!dataStr) return 'Data não disponível';
+  
+  try {
+    const data = new Date(dataStr);
+    if (isNaN(data.getTime())) {
+      return 'Data inválida';
+    }
+    return data.toLocaleDateString('pt-BR');
+  } catch (error) {
+    console.error('Erro ao formatar data:', error, dataStr);
+    return 'Erro na data';
+  }
 }
