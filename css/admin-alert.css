@@ -1,0 +1,313 @@
+/* Estilos para o painel de alerta dos operadores - v1.2 */
+.secao-alerta {
+  margin: 25px 0;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.secao-alerta h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 1.4rem;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+
+.grid-operadores-alerta {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.card-operador-alerta {
+  background-color: white;
+  border-radius: 8px;
+  padding: 18px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-top: 4px solid #ddd;
+}
+
+.card-operador-alerta:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.card-operador-alerta h4 {
+  margin-top: 0;
+  color: #2c3e50;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.metricas {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  gap: 15px;
+}
+
+.metrica {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background-color: #f9f9f9;
+  padding: 12px;
+  border-radius: 6px;
+}
+
+.metrica span {
+  font-size: 0.85em;
+  color: #555;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.metrica strong {
+  font-size: 1.3em;
+  margin-bottom: 5px;
+  letter-spacing: -0.5px;
+}
+
+.metrica small {
+  color: #666;
+  font-size: 0.8em;
+  margin-top: 5px;
+  line-height: 1.4;
+}
+
+.tendencia-negativa {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin: 10px 0;
+  font-size: 0.9em;
+  border-left: 3px solid #ffc107;
+}
+
+.recomendacao {
+  margin-top: 15px;
+  font-size: 0.95em;
+  background-color: #e8f4f8;
+  padding: 12px;
+  border-radius: 6px;
+  line-height: 1.5;
+  border-left: 3px solid #0d6efd;
+}
+
+.recomendacao strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #0d6efd;
+}
+
+.alerta-ok {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.1em;
+  border-left: 4px solid #28a745;
+}
+
+.erro-admin {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.1em;
+  border-left: 4px solid #dc3545;
+}
+
+/* Estilos para a mensagem de carregamento */
+.carregando {
+  text-align: center;
+  padding: 30px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Estilos adicionais para filtros e controles */
+.controles-alerta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.filtros-alerta select {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background-color: white;
+  font-size: 0.95em;
+  min-width: 180px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s;
+}
+
+.filtros-alerta select:focus {
+  outline: none;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
+}
+
+.atualizar-alerta {
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.atualizar-alerta:hover {
+  background-color: #0b5ed7;
+}
+
+.atualizar-alerta:active {
+  transform: translateY(1px);
+}
+
+/* Estilo para diferentes níveis de criticidade */
+.card-operador-alerta.alta-criticidade {
+  border-top: 4px solid #dc3545;
+}
+
+.card-operador-alerta.media-criticidade {
+  border-top: 4px solid #fd7e14;
+}
+
+.card-operador-alerta.baixa-criticidade {
+  border-top: 4px solid #ffc107;
+}
+
+/* Ícones indicativos */
+.indicador-criticidade {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.indicador-alto {
+  background-color: #dc3545;
+}
+
+.indicador-medio {
+  background-color: #fd7e14;
+}
+
+.indicador-baixo {
+  background-color: #ffc107;
+}
+
+/* Estilos para a descrição da seção */
+.secao-descricao {
+  color: #6c757d;
+  margin-bottom: 20px;
+  font-size: 1.05em;
+}
+
+/* Estilos para a legenda de criticidade */
+.legenda-criticidade {
+  margin-top: 25px;
+  background-color: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.legenda-criticidade h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1.05em;
+  color: #495057;
+}
+
+.legenda-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.95em;
+  color: #495057;
+}
+
+.legenda-item span {
+  width: 12px;
+  height: 12px;
+  display: inline-block;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.legenda-item strong {
+  margin-right: 5px;
+}
+
+/* Animação de carregamento */
+.loader {
+  border: 3px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 3px solid #0d6efd;
+  width: 25px;
+  height: 25px;
+  animation: spin 1.5s linear infinite;
+  display: inline-block;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Melhorias na responsividade */
+@media (max-width: 768px) {
+  .grid-operadores-alerta {
+    grid-template-columns: 1fr;
+  }
+  
+  .controles-alerta {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+  
+  .filtros-alerta {
+    width: 100%;
+  }
+  
+  .filtros-alerta select {
+    width: 100%;
+  }
+  
+  .atualizar-alerta {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+}

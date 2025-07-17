@@ -788,6 +788,42 @@ def admin_usuarios():
         print(f"❌ Erro ao buscar usuários: {e}")
         return jsonify({"erro": str(e)}), 500
 
+@app.route("/api/admin/registros", methods=["GET"])
+def admin_registros():
+    """Retorna todos os registros para análise administrativa"""
+    if not verificar_admin():
+        return jsonify({"erro": "Acesso negado"}), 403
+    
+    try:
+        # Consulta que junta registros com usuários para ter mais detalhes
+        registros_query = db.session.query(
+            Registro,
+            User.nome.label('usuario_nome')
+        ).join(
+            User, Registro.user_id == User.id
+        ).order_by(
+            Registro.data_registro.desc()
+        ).all()
+        
+        registros = []
+        for r, usuario_nome in registros_query:
+            registros.append({
+                'id': r.id,
+                'nome_operador': r.nome_operador,
+                'data_registro': r.data_registro.strftime('%Y-%m-%d') if r.data_registro else None,
+                'numero_pdv': r.numero_pdv,
+                'tma': r.tma,
+                'tmr': r.tmr,
+                'user_id': r.user_id,
+                'usuario_nome': usuario_nome
+            })
+        
+        return jsonify(registros)
+    
+    except Exception as e:
+        print(f"Erro ao obter registros para admin: {str(e)}")
+        return jsonify({"erro": "Erro ao buscar registros"}), 500
+
 @app.route("/api/admin/usuarios/<int:user_id>", methods=["DELETE"])
 def admin_delete_user(user_id):
     """Deletar usuário"""

@@ -202,13 +202,50 @@ if (form) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  if (tabela) carregarRegistros();
+  console.log('DOM carregado, inicializando aplicação...');
+  console.log('Página atual:', window.location.pathname);
+  console.log('Status de admin:', is_admin);
+  
+  if (tabela) {
+    console.log('Tabela encontrada, carregando registros...');
+    carregarRegistros();
+  }
+  
   if (user_nome && document.getElementById('usuario-logado')) {
+    console.log('Atualizando nome de usuário na interface...');
     document.getElementById('usuario-logado').innerText = user_nome;
   }
   
   // Verificar se usuário é admin consultando a API
+  console.log('Verificando status de admin...');
   await verificarStatusAdmin();
+  console.log('Status de admin após verificação:', is_admin);
+  
+  // Se estiver na página de admin, carregar dados administrativos
+  if (window.location.pathname.includes('admin')) {
+    console.log('Estamos na página de admin, preparando para carregar dados administrativos...');
+    
+    // Verificar se o elemento do painel existe
+    const painelAlerta = document.getElementById('painel-operadores-alerta');
+    if (!painelAlerta) {
+      console.error('ERRO: Elemento painel-operadores-alerta não encontrado!');
+      console.log('IDs disponíveis na página:', 
+        Array.from(document.querySelectorAll('[id]')).map(el => el.id));
+    } else {
+      console.log('Elemento painel-operadores-alerta encontrado:', painelAlerta);
+    }
+    
+    if (is_admin) {
+      console.log('Usuário é admin, carregando dados administrativos...');
+      
+      // Dar um pequeno delay para garantir que a página carregou completamente
+      setTimeout(() => {
+        carregarRegistrosAdmin();
+      }, 500);
+    } else {
+      console.log('Usuário não é admin, não carregando dados administrativos');
+    }
+  }
   
   // Definir data atual por padrão
   const dataInput = document.getElementById('data_registro');
@@ -216,6 +253,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     const hoje = new Date();
     const dataFormatada = hoje.toISOString().split('T')[0]; // YYYY-MM-DD
     dataInput.value = dataFormatada;
+  }
+  
+  // Configurar o filtro de criticidade, se existir
+  const filtroCriticidade = document.getElementById('filtro-criticidade');
+  if (filtroCriticidade) {
+    console.log('Configurando filtro de criticidade...');
+    filtroCriticidade.addEventListener('change', function() {
+      const valor = this.value;
+      console.log('Filtro alterado para:', valor);
+      
+      const cards = document.querySelectorAll('.card-operador-alerta');
+      if (valor === 'todos') {
+        cards.forEach(card => card.style.display = 'block');
+      } else {
+        cards.forEach(card => {
+          if (card.classList.contains(valor + '-criticidade')) {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      }
+    });
   }
 });
 
@@ -302,4 +362,249 @@ if (recarregarBtn) {
     await carregarRegistros();
     alert('Dados recarregados!');
   });
+}
+
+// Função para carregar todos os registros para o admin
+async function carregarRegistrosAdmin() {
+  if (!is_admin || !window.location.pathname.includes('admin')) {
+    return;
+  }
+  
+  const painelAlerta = document.getElementById('painel-operadores-alerta');
+  if (!painelAlerta) {
+    console.error('Elemento painel-operadores-alerta não encontrado');
+    return;
+  }
+  
+  painelAlerta.innerHTML = '<div class="carregando"><div class="loader"></div>Analisando dados dos operadores...</div>';
+  
+  try {
+    const res = await fetch('/api/admin/registros');
+    
+    if (!res.ok) {
+      throw new Error(`Erro HTTP: ${res.status}`);
+    }
+    
+    const registros = await res.json();
+    
+    if (registros.length === 0) {
+      painelAlerta.innerHTML = '<div class="alerta-ok">Não há registros disponíveis para análise</div>';
+      return [];
+    }
+    
+    const operadoresProblematicos = analisarOperadoresProblematicos(registros);
+    exibirOperadoresComProblemas(operadoresProblematicos);
+    
+    return registros;
+  } catch (error) {
+    console.error('Erro ao carregar registros administrativos:', error);
+    
+    if (painelAlerta) {
+      painelAlerta.innerHTML = `<div class="erro-admin">Erro ao carregar dados administrativos: ${error.message}</div>`;
+    }
+    return [];
+  }
+}
+
+// Função para analisar dados e identificar operadores que precisam de atenção
+function analisarOperadoresProblematicos(registros) {
+  // Agrupar registros por operador
+  const registrosPorOperador = {};
+  
+  registros.forEach(reg => {
+    if (!registrosPorOperador[reg.nome_operador]) {
+      registrosPorOperador[reg.nome_operador] = [];
+    }
+    registrosPorOperador[reg.nome_operador].push(reg);
+  });
+  
+  // Analisar cada operador
+  const operadoresProblematicos = [];
+  
+  for (const nome in registrosPorOperador) {
+    const registrosOperador = registrosPorOperador[nome];
+    
+    // Calcular médias de TMA e TMR
+    const mediaTMA = registrosOperador.reduce((acc, reg) => acc + reg.tma, 0) / registrosOperador.length;
+    const mediaTMR = registrosOperador.reduce((acc, reg) => acc + reg.tmr, 0) / registrosOperador.length;
+    
+    // Calcular percentual fora da meta
+    const registrosForaMetaTMA = registrosOperador.filter(reg => reg.tma > META_TMA).length;
+    const registrosForaMetaTMR = registrosOperador.filter(reg => reg.tmr > META_TMR).length;
+    
+    const percentualForaMetaTMA = (registrosForaMetaTMA / registrosOperador.length) * 100;
+    const percentualForaMetaTMR = (registrosForaMetaTMR / registrosOperador.length) * 100;
+    
+    // Verificar tendências (últimos 3 registros)
+    const ultimosRegistros = [...registrosOperador].sort((a, b) => 
+      new Date(b.data_registro) - new Date(a.data_registro)
+    ).slice(0, 3);
+    
+    const tempiora = ultimosRegistros.length >= 2 && 
+                    ultimosRegistros[0].tma > ultimosRegistros[1].tma &&
+                    ultimosRegistros[0].tmr > ultimosRegistros[1].tmr;
+    
+    // Pontuar o operador (quanto maior a pontuação, mais atenção é necessária)
+    let pontuacao = 0;
+    
+    // Pontuação baseada na média
+    pontuacao += mediaTMA > META_TMA ? 30 : 0;
+    pontuacao += mediaTMR > META_TMR ? 30 : 0;
+    
+    // Pontuação baseada no percentual fora da meta
+    pontuacao += percentualForaMetaTMA > 50 ? 20 : (percentualForaMetaTMA > 30 ? 10 : 0);
+    pontuacao += percentualForaMetaTMR > 50 ? 20 : (percentualForaMetaTMR > 30 ? 10 : 0);
+    
+    // Pontuação baseada na tendência
+    pontuacao += tempiora ? 20 : 0;
+    
+    // Adicionar apenas operadores com problemas significativos
+    if (pontuacao >= 30) {
+      operadoresProblematicos.push({
+        nome,
+        mediaTMA: mediaTMA.toFixed(2),
+        mediaTMR: mediaTMR.toFixed(2),
+        percentualForaMetaTMA: percentualForaMetaTMA.toFixed(0),
+        percentualForaMetaTMR: percentualForaMetaTMR.toFixed(0),
+        tempiora,
+        pontuacao,
+        ultimoRegistro: ultimosRegistros[0] || null
+      });
+    }
+  }
+  
+  // Ordenar por pontuação (do maior para o menor)
+  return operadoresProblematicos.sort((a, b) => b.pontuacao - a.pontuacao);
+}
+
+// Função para exibir operadores que precisam de atenção
+function exibirOperadoresComProblemas(operadores) {
+  const painelAlerta = document.getElementById('painel-operadores-alerta');
+  if (!painelAlerta) {
+    return;
+  }
+  
+  if (operadores.length === 0) {
+    painelAlerta.innerHTML = '<div class="alerta-ok">✅ Todos os operadores estão com desempenho adequado! 👍</div>';
+    return;
+  }
+  
+  let html = '<h3>⚠️ Operadores que precisam de atenção</h3>';
+  html += '<div class="grid-operadores-alerta">';
+  
+  operadores.forEach(op => {
+    const corTMA = parseFloat(op.mediaTMA) > META_TMA ? 'red' : 'green';
+    const corTMR = parseFloat(op.mediaTMR) > META_TMR ? 'red' : 'green';
+    
+    // Determinar a criticidade
+    let criticidadeClass = '';
+    let iconeCriticidade = '';
+    
+    if (op.pontuacao >= 70) {
+      criticidadeClass = 'alta-criticidade';
+      iconeCriticidade = '🔴';
+    } else if (op.pontuacao >= 50) {
+      criticidadeClass = 'media-criticidade';
+      iconeCriticidade = '🟠';
+    } else {
+      criticidadeClass = 'baixa-criticidade';
+      iconeCriticidade = '🟡';
+    }
+    
+    // Ícones para status
+    const tmaIcon = parseFloat(op.mediaTMA) > META_TMA ? '⚠️' : '✅';
+    const tmrIcon = parseFloat(op.mediaTMR) > META_TMR ? '⚠️' : '✅';
+    
+    html += `
+      <div class="card-operador-alerta ${criticidadeClass}">
+        <h4>${iconeCriticidade} ${op.nome}</h4>
+        <div class="metricas">
+          <div class="metrica">
+            <span>${tmaIcon} TMA Média</span>
+            <strong style="color: ${corTMA}">${op.mediaTMA} min/cupom</strong>
+            <small>${op.percentualForaMetaTMA}% dos registros fora da meta</small>
+          </div>
+          <div class="metrica">
+            <span>${tmrIcon} TMR Média</span>
+            <strong style="color: ${corTMR}">${op.mediaTMR} seg/item</strong>
+            <small>${op.percentualForaMetaTMR}% dos registros fora da meta</small>
+          </div>
+        </div>
+        ${op.tempiora ? '<div class="tendencia-negativa">⚠️ Tendência de piora nos últimos registros</div>' : ''}
+        <div class="recomendacao">
+          <strong>📋 Ação recomendada:</strong>
+          ${gerarRecomendacao(op)}
+        </div>
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  
+  console.log('HTML gerado para o painel:', html.substring(0, 150) + '...');
+  
+  // Aplicar o HTML ao painel de alerta
+  painelAlerta.innerHTML = html;
+  
+  // Verificar se o HTML foi aplicado corretamente
+  console.log('HTML final do painel:', painelAlerta.innerHTML.substring(0, 150) + '...');
+}
+
+// Função para gerar recomendações
+function gerarRecomendacao(operador) {
+  if (operador.mediaTMA > META_TMA && operador.mediaTMR > META_TMR) {
+    return 'Orientar sobre agilidade e realizar acompanhamento semanal dos tempos.';
+  } else if (operador.mediaTMA > META_TMA) {
+    return 'Orientar sobre agilidade e realizar acompanhamento semanal dos tempos.';
+  } else if (operador.mediaTMR > META_TMR) {
+    return 'Orientar sobre agilidade e realizar acompanhamento semanal dos tempos.';
+  } else if (operador.tempiora) {
+    return 'Orientar sobre agilidade e realizar acompanhamento semanal dos tempos.';
+  }
+  
+  return 'Orientar sobre agilidade e realizar acompanhamento semanal dos tempos.';
+}
+
+// Função para inicializar o painel de alerta dos operadores
+function inicializarPainelAlerta() {
+  console.log('Inicializando painel de alerta dos operadores...');
+  
+  const painelAlerta = document.getElementById('painel-operadores-alerta');
+  if (!painelAlerta) {
+    console.error('Elemento painel-operadores-alerta não encontrado durante inicialização!');
+    return;
+  }
+  
+  // Verificar se estamos na página de admin
+  if (!window.location.pathname.includes('admin')) {
+    console.log('Não estamos na página de admin, não inicializando painel de alerta');
+    return;
+  }
+  
+  // Verificar se o usuário é admin
+  if (!is_admin) {
+    console.log('Usuário não é admin, não inicializando painel de alerta');
+    painelAlerta.innerHTML = '<div class="erro-admin">Você não tem permissão para acessar este painel</div>';
+    return;
+  }
+  
+  // Mostrar mensagem de carregamento
+  painelAlerta.innerHTML = '<div class="carregando">Iniciando análise de operadores...</div>';
+  
+  // Carregar dados dos operadores
+  setTimeout(() => {
+    console.log('Carregando dados de operadores com delay...');
+    carregarRegistrosAdmin();
+  }, 1000);
+  
+  // Configurar atualização periódica
+  setInterval(() => {
+    console.log('Atualizando dados automaticamente...');
+    carregarRegistrosAdmin();
+  }, 300000); // Atualizar a cada 5 minutos
+}
+
+// Adicionar evento para inicializar o painel quando a página admin for carregada
+if (window.location.pathname.includes('admin')) {
+  window.addEventListener('load', inicializarPainelAlerta);
 }

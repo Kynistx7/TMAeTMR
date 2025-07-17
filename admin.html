@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="device-width, initial-scale=1.0">
     <title>Admin - Sistema TMA/TMR</title>
-    <link rel="stylesheet" href="css/admin.css?v=2.0">
+    <link rel="stylesheet" href="css/admin.css?v=2.1">
+    <link rel="stylesheet" href="css/admin-alert.css?v=1.1">
+    <link rel="stylesheet" href="css/ranking-compact.css?v=1.1">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/script.js?v=1.2"></script>
 </head>
 <body class="admin-page">
     <div class="admin-container">
@@ -38,13 +41,46 @@
 
         <!-- Navigation -->
         <div class="admin-nav">
-            <button class="admin-nav-btn active" onclick="showSection('usuarios')">👥 Usuários</button>
+            <button class="admin-nav-btn active" onclick="showSection('atencao')">⚠️ Atenção</button>
+            <button class="admin-nav-btn" onclick="showSection('usuarios')">👥 Usuários</button>
             <button class="admin-nav-btn" onclick="showSection('top-tempos')">🏆 Top 10</button>
             <button class="admin-nav-btn" onclick="showSection('relatorios')">📋 Relatórios</button>
         </div>
 
+        <!-- Operadores que precisam de atenção -->
+        <div id="atencao" class="admin-content active">
+            <h2>⚠️ Monitoramento de Desempenho</h2>
+            <p class="secao-descricao">Este painel mostra operadores que precisam de atenção especial com base na análise automática de tempos.</p>
+            
+            <div class="controles-alerta">
+                <div class="filtros-alerta">
+                    <label for="filtro-criticidade">📊 Filtrar por nível:</label>
+                    <select id="filtro-criticidade">
+                        <option value="todos">Todos os níveis</option>
+                        <option value="alta">🔴 Alta criticidade</option>
+                        <option value="media">🟠 Média criticidade</option>
+                        <option value="baixa">🟡 Baixa criticidade</option>
+                    </select>
+                </div>
+                <button class="atualizar-alerta" onclick="carregarRegistrosAdmin()">🔄 Atualizar Dados</button>
+            </div>
+            <div id="painel-operadores-alerta" class="secao-alerta">
+                <div class="carregando">
+                    <div class="loader"></div>
+                    Analisando dados dos operadores...
+                </div>
+            </div>
+            
+            <div class="legenda-criticidade">
+                <h4>Legenda de criticidade:</h4>
+                <div class="legenda-item"><span class="indicador-alto"></span> <strong>Alta:</strong> Ambos os tempos fora da meta ou mais de 70% dos registros problemáticos</div>
+                <div class="legenda-item"><span class="indicador-medio"></span> <strong>Média:</strong> Um dos tempos fora da meta ou tendência de piora</div>
+                <div class="legenda-item"><span class="indicador-baixo"></span> <strong>Baixa:</strong> Próximo ao limite da meta ou recentemente fora da meta</div>
+            </div>
+        </div>
+        
         <!-- Usuários Section -->
-        <div id="usuarios" class="admin-content active">
+        <div id="usuarios" class="admin-content">
             <h2>Gerenciamento de Usuários</h2>
             <div id="usuariosList" class="admin-loading">Carregando usuários...</div>
         </div>
@@ -208,16 +244,27 @@
 
         // Show section
         function showSection(sectionName) {
+            console.log('Alternando para a seção:', sectionName);
+            
             // Remove active from all nav buttons
             document.querySelectorAll('.admin-nav-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.admin-content').forEach(content => content.classList.remove('active'));
             
             // Activate selected
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                // Fallback para quando não tem evento
+                document.querySelector(`.admin-nav-btn[onclick*="${sectionName}"]`).classList.add('active');
+            }
+            
             document.getElementById(sectionName).classList.add('active');
             
             // Load specific data
-            if (sectionName === 'top-tempos') {
+            if (sectionName === 'atencao') {
+                console.log('Carregando dados de operadores que precisam de atenção...');
+                carregarRegistrosAdmin();
+            } else if (sectionName === 'top-tempos') {
                 loadRankingGeral();
                 updateToday();
             } else if (sectionName === 'relatorios') {
@@ -1014,6 +1061,20 @@
                 await loadRankingGeral();
                 updateToday();
                 console.log('✅ Inicialização completa');
+                
+                // Inicializar o painel de alerta de operadores
+                if (typeof inicializarPainelAlerta === 'function') {
+                    console.log('Chamando inicializarPainelAlerta...');
+                    inicializarPainelAlerta();
+                } else {
+                    console.error('Função inicializarPainelAlerta não disponível');
+                    setTimeout(() => {
+                        console.log('Tentando carregar operadores após delay...');
+                        if (typeof carregarRegistrosAdmin === 'function') {
+                            carregarRegistrosAdmin();
+                        }
+                    }, 2000);
+                }
             } catch (error) {
                 console.error('❌ Erro na inicialização:', error);
             }
@@ -1021,6 +1082,37 @@
 
         // Auto-load on page ready
         init();
+    </script>
+    
+    <!-- Remova essa linha se o script já estiver no head -->
+    <!-- <script src="js/script.js?v=1.1"></script> -->
+    
+    <!-- Script para garantir que o painel de alerta seja inicializado -->
+    <script>
+        // Garantir que o painel de alerta seja inicializado após tudo carregar
+        window.addEventListener('load', function() {
+            console.log('Página totalmente carregada, verificando painel de alerta...');
+            
+            // Aguardar um momento para garantir que todos os scripts foram processados
+            setTimeout(function() {
+                // Verificar se a função carregarRegistrosAdmin existe
+                if (typeof carregarRegistrosAdmin === 'function') {
+                    console.log('Chamando carregarRegistrosAdmin explicitamente...');
+                    carregarRegistrosAdmin();
+                } else {
+                    console.error('Função carregarRegistrosAdmin não disponível');
+                }
+                
+                // Verificar se estamos na seção de atenção
+                const secaoAtencao = document.getElementById('atencao');
+                if (secaoAtencao && secaoAtencao.classList.contains('active')) {
+                    console.log('Seção de atenção está ativa');
+                } else {
+                    console.log('Seção de atenção não está ativa, ativando...');
+                    showSection('atencao');
+                }
+            }, 1000);
+        });
     </script>
 </body>
 </html>

@@ -7,6 +7,7 @@ Sistema web para monitoramento e análise de tempos de atendimento (TMA) e respo
 - ✅ **Sistema de Login e Registro** - Autenticação segura de usuários
 - ✅ **Registro de Tempos** - Interface para inserir dados de TMA e TMR
 - ✅ **Dashboard Administrativo** - Painel completo com estatísticas e análises
+- ✅ **Monitoramento de Desempenho** - Identificação automática de operadores que precisam de atenção
 - ✅ **Top 10 Rankings** - Melhores e piores tempos (geral e diário)
 - ✅ **Sistema de Metas** - Filtragem inteligente por metas configuráveis
 - ✅ **Gráficos Interativos** - Visualização de dados com Chart.js
