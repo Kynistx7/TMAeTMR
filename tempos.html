@@ -6,6 +6,60 @@
   <title>Cálculo de TMA e TMR</title>
   <link rel="stylesheet" href="css/temp.css">
   
+  <style>
+    /* Estilos para o campo "Outros" - igual aos outros campos */
+    #outro-operador-container {
+      display: none; /* Inicialmente oculto */
+    }
+    
+    /* Estilo padronizado para o select de nome do operador */
+    #nome {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 14px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      height: 38px;
+      background-color: white;
+      appearance: none; /* Remove estilos nativos de alguns navegadores */
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23444' d='M3.8 4.4c-.3-.3-.8-.3-1 0-.3.3-.3.8 0 1l2.6 2.6c.3.3.8.3 1 0l2.6-2.6c.3-.3.3-.8 0-1-.3-.3-.8-.3-1 0L6 6.3 3.8 4.4z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 30px; /* Espaço para o ícone de seta */
+    }
+    
+    /* Estado de foco do select */
+    #nome:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+    }
+    
+    /* O input segue o mesmo estilo dos outros inputs do sistema */
+    #outro-operador {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 14px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      height: 38px; /* Altura padrão para combinar com outros campos */
+      appearance: none; /* Remove estilos nativos de alguns navegadores */
+      background-color: white;
+    }
+    
+    /* Estado de foco igual aos outros campos */
+    #outro-operador:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+    }
+    
+    /* Para garantir que o container tenha o mesmo espaçamento */
+    #outro-operador-container.form-group {
+      margin-bottom: 15px;
+    }
   </style>
 </head>
 <body>
@@ -41,7 +95,33 @@
         <form id="form" class="form-grid">
           <div class="form-group">
             <label for="nome">Nome do Operador</label>
-            <input type="text" id="nome" placeholder="Ex: João Silva" required>
+            <select id="nome" required>
+              <option value="" disabled selected>Selecione um operador</option>
+              <!-- Operadores pré-cadastrados -->
+              <option value="Operador">Maria Raiane</option>
+              <option value="Operador">Lucas Henrique</option>
+              <option value="Operador">Gustavo</option>
+              <option value="Operador">Adriana</option>
+              <option value="Operador">Davi Andreta</option>
+              <option value="Estagiario">Davi Domiciano</option>
+              <option value="Estagiario">Anna Carolina</option>
+              <option value="Estagiario">Leticia</option>
+              <option value="Estagiario">Levi</option>
+              <option value="Estagiario">Yndrigo</option>
+              <option value="Fiscal">Lucas Almeida</option>
+              <option value="Fiscal">Marcela</option>
+              <option value="Fiscal">Rosangela</option>
+              <option value="Lider">Nirian</option>
+              <option value="Aux lider">Giovana</option>
+              <option value="Op especializada">Andreia</option>
+              <option value="Fiscal">Adonane</option>
+              <option value="outros">-- Outros --</option>
+            </select>
+          </div>
+          
+          <div class="form-group" id="outro-operador-container">
+            <label for="outro-operador">Nome do Operador (Outros)</label>
+            <input type="text" id="outro-operador" placeholder="Digite o nome do operador">
           </div>
           
           <div class="form-group">
@@ -106,5 +186,243 @@
   </div>
 
   <script src="js/script.js"></script>
+  
+  <script>
+    // Script para controlar o campo "Outros"
+    document.addEventListener('DOMContentLoaded', function() {
+      const selectNome = document.getElementById('nome');
+      const outroOperadorContainer = document.getElementById('outro-operador-container');
+      const outroOperadorInput = document.getElementById('outro-operador');
+      
+      // Definir data padrão como hoje
+      const hoje = new Date().toISOString().split('T')[0];
+      document.getElementById('data_registro').value = hoje;
+      
+      // Configurar botão de exportação CSV
+      const exportarCsvBtn = document.getElementById('exportar-csv');
+      if (exportarCsvBtn) {
+        exportarCsvBtn.addEventListener('click', exportarParaCSV);
+      }
+      
+      // Monitorar mudanças na seleção
+      selectNome.addEventListener('change', function() {
+        if (this.value === 'outros') {
+          outroOperadorContainer.style.display = 'block';
+          outroOperadorInput.setAttribute('required', 'required');
+          
+          // Foco automático no campo de texto
+          setTimeout(() => {
+            outroOperadorInput.focus();
+          }, 50);
+        } else {
+          outroOperadorContainer.style.display = 'none';
+          outroOperadorInput.removeAttribute('required');
+        }
+      });
+      
+      // Modificar o comportamento do formulário para usar o valor do campo "Outros" quando selecionado
+      const form = document.getElementById('form');
+      form.addEventListener('submit', function(event) {
+        if (selectNome.value === 'outros' && outroOperadorInput.value.trim()) {
+          // Substituir o valor do select pelo texto inserido em "Outros"
+          selectNome.value = outroOperadorInput.value.trim();
+        }
+      });
+      
+      // Configurar importação de CSV
+      const importarCsv = document.getElementById('importar-csv');
+      if (importarCsv) {
+        importarCsv.addEventListener('change', function(event) {
+          const arquivo = event.target.files[0];
+          if (arquivo) {
+            processarArquivoCSV(arquivo);
+          }
+        });
+      }
+    });
+    
+    // Função para exportar dados para CSV
+    async function exportarParaCSV() {
+      if (!user_id) {
+        alert('Você precisa estar logado para exportar dados.');
+        return;
+      }
+      
+      try {
+        console.log('Obtendo dados para exportação...');
+        const resposta = await fetch(`/api/registros/${user_id}`);
+        
+        if (!resposta.ok) {
+          throw new Error(`Erro HTTP: ${resposta.status}`);
+        }
+        
+        const registros = await resposta.json();
+        
+        if (registros.length === 0) {
+          alert('Não há registros para exportar.');
+          return;
+        }
+        
+        // Criar conteúdo CSV
+        let csvConteudo = 'nome_operador,data_registro,numero_pdv,tma,tmr\n';
+        
+        registros.forEach(reg => {
+          csvConteudo += `${reg.nome_operador || ''},${reg.data_registro || ''},${reg.numero_pdv || ''},${reg.tma || ''},${reg.tmr || ''}\n`;
+        });
+        
+        // Criar blob e download
+        const blob = new Blob([csvConteudo], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        
+        // Criar nome de arquivo com data atual
+        const dataAtual = new Date().toISOString().slice(0, 10);
+        const nomeArquivo = `tma_tmr_export_${dataAtual}.csv`;
+        
+        // Configurar download
+        if (navigator.msSaveBlob) { // Para IE e Edge
+          navigator.msSaveBlob(blob, nomeArquivo);
+        } else {
+          const url = URL.createObjectURL(blob);
+          link.href = url;
+          link.download = nomeArquivo;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+        
+        console.log('Exportação concluída!');
+        alert(`Exportação concluída! ${registros.length} registros exportados.`);
+      } catch (error) {
+        console.error('Erro durante exportação CSV:', error);
+        alert('Erro ao exportar dados: ' + error.message);
+      }
+    }
+    
+    // Função para processar arquivo CSV importado
+    function processarArquivoCSV(arquivo) {
+      console.log('Processando arquivo CSV:', arquivo.name);
+      
+      const leitor = new FileReader();
+      
+      leitor.onload = async function(e) {
+        try {
+          const conteudo = e.target.result;
+          const linhas = conteudo.split('\n');
+          
+          // Verificar se há dados suficientes
+          if (linhas.length < 2) {
+            alert('Arquivo CSV inválido ou vazio.');
+            return;
+          }
+          
+          // Verificar cabeçalho (primeira linha)
+          const cabecalho = linhas[0].toLowerCase().split(',');
+          const indices = {
+            nome: cabecalho.indexOf('nome_operador'),
+            data: cabecalho.indexOf('data_registro'),
+            pdv: cabecalho.indexOf('numero_pdv'),
+            tma: cabecalho.indexOf('tma'),
+            tmr: cabecalho.indexOf('tmr')
+          };
+          
+          // Verificar se todos os campos necessários existem
+          if (Object.values(indices).includes(-1)) {
+            alert('Formato CSV inválido. O cabeçalho deve conter: nome_operador, data_registro, numero_pdv, tma, tmr');
+            return;
+          }
+          
+          // Processar linhas de dados
+          const registros = [];
+          const erros = [];
+          
+          for (let i = 1; i < linhas.length; i++) {
+            if (!linhas[i].trim()) continue; // Pular linhas vazias
+            
+            const valores = linhas[i].split(',');
+            
+            // Verificar se a linha tem todas as colunas
+            if (valores.length !== cabecalho.length) {
+              erros.push(`Linha ${i+1}: número incorreto de colunas`);
+              continue;
+            }
+            
+            // Criar objeto de registro
+            const registro = {
+              nome_operador: valores[indices.nome],
+              data_registro: valores[indices.data],
+              numero_pdv: valores[indices.pdv],
+              tma: parseFloat(valores[indices.tma]),
+              tmr: parseFloat(valores[indices.tmr]),
+              user_id: parseInt(localStorage.getItem('user_id'))
+            };
+            
+            // Validar valores
+            if (isNaN(registro.tma) || isNaN(registro.tmr)) {
+              erros.push(`Linha ${i+1}: TMA ou TMR inválidos`);
+              continue;
+            }
+            
+            registros.push(registro);
+          }
+          
+          // Mostrar resumo antes de enviar
+          const confirmacao = confirm(
+            `Encontrados ${registros.length} registros para importar.\n` +
+            `${erros.length > 0 ? erros.length + ' linhas com erros.\n' : ''}` +
+            'Deseja continuar com a importação?'
+          );
+          
+          if (!confirmacao) {
+            return;
+          }
+          
+          // Enviar registros um por um
+          let sucessos = 0;
+          let falhas = 0;
+          
+          for (const registro of registros) {
+            try {
+              const response = await fetch("/api/registros", {
+                method: "POST",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify(registro)
+              });
+              
+              if (response.ok) {
+                sucessos++;
+              } else {
+                falhas++;
+                console.error('Falha ao importar registro:', registro);
+              }
+            } catch (error) {
+              falhas++;
+              console.error('Erro na requisição:', error);
+            }
+          }
+          
+          // Mostrar resultado
+          alert(`Importação concluída!\n${sucessos} registros importados com sucesso.\n${falhas} falhas.`);
+          
+          // Limpar campo de arquivo
+          importarCsv.value = '';
+          
+          // Recarregar dados na tabela
+          if (sucessos > 0) {
+            carregarRegistros();
+          }
+          
+        } catch (error) {
+          console.error('Erro ao processar CSV:', error);
+          alert('Erro ao processar o arquivo CSV: ' + error.message);
+        }
+      };
+      
+      leitor.onerror = function() {
+        alert('Erro ao ler o arquivo.');
+      };
+      
+      leitor.readAsText(arquivo);
+    }
+  </script>
 </body>
 </html>
